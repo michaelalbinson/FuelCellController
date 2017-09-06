@@ -1,44 +1,6 @@
-// FC States
-#define FC_INITIAL 0
-#define FC_STANDBY 1
-#define FC_STARTUP 2
-#define FC_RUN 3
-#define FC_ALARM 4
-#define FC_SHUTDOWN 5
+#include "FC_Constants.h"
 
-// FC Substates
-#define FC_STARTUP_FAN_SPOOLUP 6
-#define FC_STARTUP_STARTUP_PURGE 7
-#define FC_STARTUP_END 8
-
-// Analog Pins
-#define THEMRMISTOR_PIN 0
-#define PRESSURE_PIN 1
-#define CURRENT_PIN 2
-#define VOLTAGE_PIN 3
-#define HYDROGEN_PIN 4
-
-// Fan States
-#define FAN_OFF 0
-#define FAN_ON_LOW 1
-#define FAN_ON_MED 2
-#define FAN_ON_HIGH 3
-
-// Digital Pins
-#define SYSTEM_ON_PIN 12
-#define PURGE_PIN 2
-#define SUPPLY_PIN 3
 #define RESISTOR_PIN 4
-#define FC_RELAY_PIN 5
-
-// Valve, Resistor, Relay States (note that this may need to change
-#define OPEN 0
-#define CLOSED 1
-
-// Other
-#define ARRAY_SIZE 300 // will need to be reduced for testing on an uno
-#define StackTempFixedResistance 10000
-#define FC_MIN_CURRENT 0 // will need to be decided by testing
 
 // flags
 boolean fc_on = false;
@@ -135,7 +97,7 @@ void Check_Alarms() {
   if (fc_temp > 500)
     fc_alarm = true;
 
-  // will need to fill arrays here 
+  // will need to fill arrays here
 
   if (arrayIndex < ARRAY_SIZE || !arrays_filled) {
     arrayIndex++;
@@ -191,7 +153,7 @@ void FC() {
       }
 
       // probably need to set the default state of all the things in the fuel cell
-      
+
       if (STANDBY_DELAY_TIME <= Current_Time - timer_start_time && fc_on) {
         timer_time_set = false;
         stateTransition(FC_STANDBY, FC_STARTUP);
@@ -248,7 +210,7 @@ void FC() {
     default:
       fc_alarm = true; //If we somehow enter an invalid state something is wrong so we should transfer to the FC_Alarm
       break;
-      
+
   }
 
   // eventually can add a delay here depending on what kind of timing resolution we need
@@ -260,7 +222,7 @@ void FC() {
     turnAllOff();
    }
    count++;
-   
+
    Current_Time++;
 }
 
@@ -291,7 +253,7 @@ void FCStartup() {
         fan_start_time = Current_Time;
         fc_fan_time_set = true;
       }
-      
+
       if (FAN_SPOOLUP_TIME <= Current_Time - fan_start_time) {
         fc_fan_time_set = false;
         subStateTransition(FC_SubState, FC_STARTUP_STARTUP_PURGE);
@@ -303,7 +265,7 @@ void FCStartup() {
       // purge valve and supply valves are opened simultaneously
       // for the start-up purge and the start-up resistor is applied
       // across the stack to limit voltage
-      
+
       if (!fc_fan_time_set) {
         purge_counter = Current_Time;
         fc_fan_time_set = true;
@@ -406,7 +368,7 @@ void setSupplyState(int state) {
   digitalWrite(SUPPLY_PIN, state);
 }
 void setFanState(int state) {
-  // will need to use a switch-case 
+  // will need to use a switch-case
 }
 
 void setRelayState(int state) {
@@ -427,14 +389,14 @@ void setupPins() {
   pinMode(10, OUTPUT);
   pinMode(9, OUTPUT);
   pinMode(8, OUTPUT);
-  pinMode(7, OUTPUT); 
+  pinMode(7, OUTPUT);
   delay(100);
   digitalWrite(13, LOW);
   digitalWrite(11, LOW);
   digitalWrite(10, LOW);
   digitalWrite(9, LOW);
   digitalWrite(8, LOW);
-  digitalWrite(7, LOW); 
+  digitalWrite(7, LOW);
 }
 
 void turnAllOff() {
@@ -442,8 +404,8 @@ void turnAllOff() {
   digitalWrite(11, LOW);
   digitalWrite(10, LOW);
   digitalWrite(9, LOW);
-  digitalWrite(8, LOW); 
-  digitalWrite(7, LOW); 
+  digitalWrite(8, LOW);
+  digitalWrite(7, LOW);
 }
 
 void flashOn() {
@@ -451,9 +413,8 @@ void flashOn() {
   digitalWrite(11, HIGH);
   digitalWrite(10, HIGH);
   digitalWrite(9, HIGH);
-  digitalWrite(8, HIGH); 
-  digitalWrite(7, HIGH); 
+  digitalWrite(8, HIGH);
+  digitalWrite(7, HIGH);
   delay(1000);
   turnAllOff();
 }
-
