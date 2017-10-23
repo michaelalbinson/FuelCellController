@@ -1,7 +1,5 @@
 #include "FC_Constants.h"
 
-#define RESISTOR_PIN 4
-
 // flags
 boolean fc_on = false;
 boolean fc_alarm = false;
