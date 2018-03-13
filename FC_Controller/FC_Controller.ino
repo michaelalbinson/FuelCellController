@@ -1,100 +1,114 @@
-#include "FC_Constants.h"
+#include "FC_Constants.h" // Include the constants file.
 
-// flags
+// ----------------- CONSTANTS -----------------
+
+// Flags
 boolean fc_on = false;
 boolean fc_alarm = false;
 boolean fc_fan_time_set = false;
 boolean timer_time_set = false;
 boolean arrays_filled = false;
 
-// Program constants, all must be determined with testing
+// Program constants (determined via testing)
 long FAN_SPOOLUP_TIME = 5000;
 long STARTUP_PURGE_LOOP_COUNT = 5000;
 unsigned long Current_Time = 0; // would overflow after 25 days if left running forever (hopefully)
 long STANDBY_DELAY_TIME = 5000;
 long SHUTDOWN_DELAY_TIME = 5000;
 
-/*
-** Counter Declaration
-*/
+// Counters
 long fan_start_time = 0;
-long purge_counter = 1;
 long timer_start_time = 0;
-long purgeLastCallTime;
+int purge_counter = 1;
+long purgeLastCallTime = 0;
 long secondCounter;
 int arrayIndex = 0;
 
-/* Fake counters*/
+// Fake Counters
 int count = 0;
 unsigned long current_time = 0;
-
-// not sure of the type for this yet
-int CurrentRequest = 0;
-
+int CurrentRequest = 0; // not sure of the type for this yet
 int stackTempPos = 0;
 int stackTempArray[ARRAY_SIZE];
 int stackPressureArray[ARRAY_SIZE];
 int stackCurrentArray[ARRAY_SIZE];
 int stackVoltageArray[ARRAY_SIZE];
 
+// States
 int FC_State = FC_INITIAL; // initial state perhaps we could enumerate these
-int FC_SubState = FC_STARTUP_FAN_SPOOLUP;
+int FC_SubState = FC_STARTUP_STARTUP_PURGE;
 
+// ----------------- SETUP -----------------
 
-/*
-** Actual Code
-**
-**
-*/
-
-// Currently, one iteration takes 0.5 ms (3/14/17)
 void setup() {
-  // set all of our variables to their initial values if needed, initiate measuring capabilities as needed
-  Serial.begin(115200);
-  pinMode(SYSTEM_ON_PIN, INPUT);
-  pinMode(PURGE_PIN, OUTPUT);
+
+  Serial.begin(115200); // Initiates the serial.
+  
+  pinMode(STATE_LED_RED, OUTPUT); // State LED.
+  pinMode(STATE_LED_GREEN, OUTPUT);
+  pinMode(STATE_LED_BLUE, OUTPUT);
+  
+  pinMode(FAN_LED_RED, OUTPUT); // Fan LED.
+  pinMode(FAN_LED_GREEN, OUTPUT);
+  pinMode(FAN_LED_BLUE, OUTPUT);
+
+  pinMode(PURGE_PIN, OUTPUT); // Purge, supply, FC relay, FC fan relay, and resistor relay.
   pinMode(SUPPLY_PIN, OUTPUT);
-  pinMode(RESISTOR_PIN, OUTPUT);
   pinMode(FC_RELAY_PIN, OUTPUT);
+  pinMode(FC_FAN_RELAY_PIN, OUTPUT);
+  pinMode(RESISTOR_PIN, OUTPUT);
+
   delay(100);
-  digitalWrite(PURGE_PIN, CLOSED);
-  digitalWrite(SUPPLY_PIN, CLOSED);
-  digitalWrite(RESISTOR_PIN, OPEN);
-  digitalWrite(FC_RELAY_PIN, OPEN);
-  delay(100);
-  setupPins();//remove
-  flashOn();//remove
+
+  flashOn(); // Flash all pins for shits and gigs.
+  
 }
 
+// ----------------- LOOP -----------------
+
 void loop() {
-  // we iterate through this switch case block infinitely
+
   Check_Alarms();
   System();
   FC();
+  
 }
 
-
-/*
-** Main Functions
-**
-**
-*/
+// ----------------- CHECK ALARMS -----------------
 
 void Check_Alarms() {
   // Check all alarm properties to make sure they're within the safe range
   // If not, set fc_alarm to true.
-  // Temperature, Pressure, Current, Voltage, Hydrogen are checked
+  // Temperature, Current, Voltage, Hydrogen are checked
 
   // Take measurements
   int fc_temp = analogRead(THEMRMISTOR_PIN);
-  int fc_pressure = analogRead(PRESSURE_PIN);
   int fc_current = analogRead(CURRENT_PIN);
   int fc_voltage = analogRead(VOLTAGE_PIN);
   int fc_hydrogen = analogRead(HYDROGEN_PIN);
 
-  if (fc_temp > 500)
+  Serial.print(fc_temp);
+  Serial.print('\t');
+  Serial.print(fc_current);
+  Serial.print('\t');
+  Serial.print(fc_voltage);
+  Serial.print('\t');
+  Serial.print(fc_hydrogen);
+  Serial.print('\n');
+  
+  if (fc_temp < FC_MIN_TEMP || fc_temp > FC_MAX_TEMP)
     fc_alarm = true;
 
+  if(fc_current < FC_MIN_CURRENT || fc_current > FC_MAX_CURRENT)
+    fc_alarm = true;
+
+  if(fc_voltage < FC_RUN_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
+    fc_alarm = true;
+
+  if(fc_hydrogen > FC_MAX_H2_READ)
+    fc_alarm = true;
+
+ 
   // will need to fill arrays here
 
   if (arrayIndex < ARRAY_SIZE || !arrays_filled) {
@@ -105,37 +119,39 @@ void Check_Alarms() {
     arrayIndex = 0;
   }
 
-  updateStackTemperature();
+  getTemperature();
 
 
   // if out of threshhold, set fc_alarm to true
 
 }
 
+// ----------------- SYSTEM -----------------
+
 void System() {
   // wait for input to set fc_on to true, set CurrentRequest
-  Serial.println(digitalRead(SYSTEM_ON_PIN));
-  if (digitalRead(SYSTEM_ON_PIN) == HIGH) {
+  
+  //if (digitalRead(SYSTEM_ON_PIN) == HIGH) { // ADD THIS BACK IN WHEN APPLYING TO CAR.
     fc_on = true;
-  }
+  //}
 
   CurrentRequest = 0; // need some logic to know how to set CurrentRequest
 }
 
-/* FC()
-** Controls the fuel cell.
-*/
+// ----------------- FC -----------------
+
 void FC() {
+  setRelayState(OPEN); // Open the relay.
+  setResistorState(OPEN); // Open the resistor to disipate power while starting up.
   if (fc_alarm)
     stateTransition(FC_State, FC_ALARM);
 
   // FSM
   switch (FC_State) {
     case (FC_INITIAL):
-      digitalWrite(13, HIGH);
-      if (count > 1000){
+      setColorState(200, 0, 0); // Shows in initial state.
+      if (count > 1000){ // A timer to determine how long to be in this state.
         stateTransition(FC_INITIAL, FC_STANDBY);
-        digitalWrite(13, LOW);//remove
         count = 0;
       }
       break;
@@ -143,8 +159,9 @@ void FC() {
       // The stack is not consuming reactant or delivering power
       // and all stack BOP actuators are in their safe state
       // The system remains in FC_STANDBY for STANDBY_DELAY_TIME
-      digitalWrite(11, HIGH);//remove
-
+      
+      setColorState(200, 50, 0);
+      
       if (!timer_time_set) {
         timer_start_time = Current_Time;
         timer_time_set = true;
@@ -156,29 +173,36 @@ void FC() {
         timer_time_set = false;
         stateTransition(FC_STANDBY, FC_STARTUP);
       }
-
       break;
 
     case (FC_STARTUP):
       // The stack goes from FC_STANDBY to a state where current can
       // safely be drawn from the stack
-      digitalWrite(10, HIGH);//remove
+      //digitalWrite(10, HIGH);//remove
+      
+      setResistorState(CLOSED); // Close the resistor relay as we have reached a stage where we no longer need the start up resistor.
+      setRelayState(CLOSED); // Close the state relay.
+      
       FCStartup();
+      
       break;
 
     case (FC_RUN):
       // ?? manual info is copied from FC_STANDBY
-      digitalWrite(9, HIGH);//remove
+      
+      setColorState(0, 200, 0);
+      
       if (!fc_on)
         stateTransition(FC_RUN, FC_SHUTDOWN);
 
       AutomaticPurgeControl();
       AutomaticFanControl();
-      StackCurrentRampControl(); // controlled using Current_Request, I would imagine
       break;
 
     case (FC_SHUTDOWN):
-      digitalWrite(8, HIGH);//remove
+      
+      setColorState(0, 0, 200);
+      
       // The stack goes from FC_RUN to FC_STANDBY. The system remains in
       // FC_SHUTDOWN for SHUTDOWN_DELAY_TIME
       if (!timer_time_set) {
@@ -201,7 +225,9 @@ void FC() {
       // seems like we need to do some work to make sure everything is in the right state
       // in the event of an alarm... we could specify the alert via a Serial.println if we really
       // wanted but we could also build a visual representation of the system that failed
-      digitalWrite(7, HIGH);//remove
+      
+      setColorState(100, 0, 100);
+      
       Serial.println("AN ALARM HAS BEEN TRIGGERED");
       break;
 
@@ -214,9 +240,8 @@ void FC() {
   // eventually can add a delay here depending on what kind of timing resolution we need
   if (count > 1000){
     count = 0;
-    Serial.println(FC_State); //remove
+
     if (FC_State == FC_STARTUP)
-      Serial.println(FC_SubState);
     turnAllOff();
    }
    count++;
@@ -224,11 +249,7 @@ void FC() {
    Current_Time++;
 }
 
-/*
-** Helper Functions
-**
-**
-*/
+// ----------------- STATE TRANSITION & SUBSTATE TRANSITION -----------------
 
 void stateTransition(int fromState, int toState) {
   FC_State = toState;
@@ -238,32 +259,20 @@ void subStateTransition(int fromState, int toState) {
   FC_SubState = toState;
 }
 
-/*
-** FC_STARTUP state machine within a state machine
-*/
+// ----------------- FC STARTUP -----------------
 
 void FCStartup() {
   switch (FC_SubState) {
-    case (FC_STARTUP_FAN_SPOOLUP):
-      // fan is turned on and given time to spool up
-      // TODO: how are we going to implement the fan?
-      if (!fc_fan_time_set) {
-        fan_start_time = Current_Time;
-        fc_fan_time_set = true;
-      }
-
-      if (FAN_SPOOLUP_TIME <= Current_Time - fan_start_time) {
-        fc_fan_time_set = false;
-        subStateTransition(FC_SubState, FC_STARTUP_STARTUP_PURGE);
-        return;
-      }
-      break;
-
     case (FC_STARTUP_STARTUP_PURGE):
       // purge valve and supply valves are opened simultaneously
       // for the start-up purge and the start-up resistor is applied
       // across the stack to limit voltage
 
+      digitalWrite(PURGE_PIN,HIGH);
+      digitalWrite(SUPPLY_PIN,HIGH);
+      
+      setColorState(200, 150, 0);
+      
       if (!fc_fan_time_set) {
         purge_counter = Current_Time;
         fc_fan_time_set = true;
@@ -271,6 +280,10 @@ void FCStartup() {
 
       if (STARTUP_PURGE_LOOP_COUNT <= Current_Time - purge_counter) {
         fc_fan_time_set = false;
+        
+        digitalWrite(PURGE_PIN,LOW);
+        digitalWrite(SUPPLY_PIN,LOW);
+        
         subStateTransition(FC_SubState, FC_STARTUP_END);
         return;
       }
@@ -280,6 +293,7 @@ void FCStartup() {
       // close purge valve
       // fan is minimum
       fc_fan_time_set = false;
+      setColorState(200, 200, 0);
       purge_counter = 1;
       stateTransition(FC_State, FC_RUN);
       subStateTransition(FC_SubState, FC_STARTUP_FAN_SPOOLUP); // switch back to startup purge
@@ -287,47 +301,49 @@ void FCStartup() {
   }
 }
 
-double Steinhart_Hart(int resistance, double a, double b, double c) {
-  // Returns the temperature of a thermistor, based on the model's coefficients
-  // These double values can be hard coded, or left as inputs for other temp readings
-  // In arduino, log() is for the natural log implementation.
-  double logR = log(resistance);
-  double model = a + b * logR + c * (logR * logR * logR);
-  return (1 / model) - 273.15; // Account for Kelvin to Celsius
-}
-
-double getStackTemperature() {
-
-  double vTemp = getAverageIntArray(stackTempArray);
-  double stackResistance = StackTempFixedResistance * (1023.0 / double(vTemp) - 1.0);
-  return Steinhart_Hart(stackResistance, 1, 1, 1);
-}
+// ----------------- FAN CONTROL -----------------
 
 float AutomaticFanControl() {
   float OptTemp;
   float UpdatedFanCmd;
-  //does the fan control thing
+  //does the fan control thing.
 
-  return OptTemp;//, UpdatedFanCmd]; // can't actually do this
+  getTemperature(); // Updates the temperature.
+
+  // THERE IS A FUNCTION BELOW TO MAKE THIS SWITCH CASE
+    
+  if(stackTempArray[stackTempPos] < FAN_SPEED_LOW){
+      setColorFan(200, 0, 0);
+  }
+  else if( (FAN_SPEED_LOW + 1) < stackTempArray[stackTempPos] && stackTempArray[stackTempPos] < FAN_SPEED_MEDIUM){
+      setColorFan(0, 200, 0);
+  }
+  else if( (FAN_SPEED_MEDIUM + 1) < stackTempArray[stackTempPos] && stackTempArray[stackTempPos] < FAN_SPEED_HIGH){
+      setColorFan(0, 0, 200);
+  }
 }
+
+// ----------------- PURGE CONTROL -----------------
 
 boolean AutomaticPurgeControl() {
-  boolean OpenPurgeValve = false;
 
-  return OpenPurgeValve;
+  digitalWrite(SUPPLY_PIN, HIGH); // The supply value should always be open.
+  
+  long time_purge = millis() - purgeLastCallTime;
+
+  if(GENERAL_PURGE_TIME + purgeTime < time_purge) {
+   digitalWrite(PURGE_PIN, LOW);
+   purgeLastCallTime = millis(); 
+   
+  }
+  else if(GENERAL_PURGE_TIME < time_purge) {
+    digitalWrite(PURGE_PIN, HIGH);
+  }
 }
 
-/*
-** This will not be implemented until we better understand how the motor controller works
-*/
+// ----------------- TEMPERATURE CONTROL -----------------
 
-float StackCurrentRampControl() {
-  float CurrentCmd;
-
-  return CurrentCmd;
-}
-
-void updateStackTemperature() {
+void getTemperature() {
   /* C20
   Reads the voltage, which is used to approximate the resistance, since the input voltage is
   the controlled 5V output from the arduino. Steinhart_Hart then used to approximate temperature
@@ -338,27 +354,7 @@ void updateStackTemperature() {
   stackTempPos = int((stackTempPos + 1) % ARRAY_SIZE);
 }
 
-double getAverageIntArray(int* a) {
-  int sizeOfArray = sizeof(a) / sizeof(int);
-  double total = 0;
-  for (int i = 0; i < sizeOfArray; i++) {
-    total += a[i];
-  }
-  return total / sizeOfArray;
-}
-
-int average(int* arr) {
-  long sum = 0;
-  for (int i; i < ARRAY_SIZE; i++)
-    sum += arr[i];
-
-  return sum / ARRAY_SIZE;
-}
-
-/*
-** Fuel Cell Controller Control Functions
-*/
-
+// ----------------- CHANGE STATES FOR PURGE, SUPPLY, FAN, RELAY, RESISTOR -----------------
 void setPurgeState(int state) {
   digitalWrite(PURGE_PIN, state);
 }
@@ -366,7 +362,7 @@ void setSupplyState(int state) {
   digitalWrite(SUPPLY_PIN, state);
 }
 void setFanState(int state) {
-  // will need to use a switch-case
+  // will need to use a switch-case 
 }
 
 void setRelayState(int state) {
@@ -377,42 +373,44 @@ void setResistorState(int state) {
   digitalWrite(RESISTOR_PIN, state);
 }
 
-
-/*
- PHYSICAL OUTPUT TEST REMOVE ALL
-*/
-void setupPins() {
-  pinMode(13, OUTPUT);
-  pinMode(11, OUTPUT);
-  pinMode(10, OUTPUT);
-  pinMode(9, OUTPUT);
-  pinMode(8, OUTPUT);
-  pinMode(7, OUTPUT);
-  delay(100);
-  digitalWrite(13, LOW);
-  digitalWrite(11, LOW);
-  digitalWrite(10, LOW);
-  digitalWrite(9, LOW);
-  digitalWrite(8, LOW);
-  digitalWrite(7, LOW);
-}
+// ----------------- TURN ALL PINS OFF -----------------
 
 void turnAllOff() {
-  digitalWrite(13, LOW);
-  digitalWrite(11, LOW);
-  digitalWrite(10, LOW);
-  digitalWrite(9, LOW);
-  digitalWrite(8, LOW);
-  digitalWrite(7, LOW);
+  digitalWrite(PURGE_PIN, LOW);
+  digitalWrite(SUPPLY_PIN, LOW);
+  digitalWrite(FC_RELAY_PIN, LOW);
+  digitalWrite(FC_FAN_RELAY_PIN, LOW);
+  digitalWrite(RESISTOR_PIN, LOW);
 }
 
+// ----------------- FLASH ALL PINS -----------------
+
 void flashOn() {
-  digitalWrite(13, HIGH);
-  digitalWrite(11, HIGH);
-  digitalWrite(10, HIGH);
-  digitalWrite(9, HIGH);
-  digitalWrite(8, HIGH);
-  digitalWrite(7, HIGH);
+  digitalWrite(PURGE_PIN, HIGH);
+  digitalWrite(SUPPLY_PIN, HIGH);
+  digitalWrite(FC_RELAY_PIN, HIGH);
+  digitalWrite(FC_FAN_RELAY_PIN, HIGH);
+  digitalWrite(RESISTOR_PIN, HIGH);
+  //digitalWrite(7, HIGH);
   delay(1000);
   turnAllOff();
+
+}
+
+// ----------------- CONTROL OF RGB LEDs -----------------
+
+void setColorState(int red, int green, int blue)
+{
+  analogWrite(STATE_LED_RED,red);
+  analogWrite(STATE_LED_BLUE, blue);
+  analogWrite(STATE_LED_GREEN, green);
+  
+}
+
+void setColorFan(int red, int green, int blue)
+{
+  analogWrite(FAN_LED_RED,red);
+  analogWrite(FAN_LED_BLUE, blue);
+  analogWrite(FAN_LED_GREEN, green);
+  
 }
