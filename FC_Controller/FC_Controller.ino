@@ -33,6 +33,7 @@ unsigned short stackTempArray[ARRAY_SIZE];
 unsigned short stackCurrentArray[ARRAY_SIZE];
 unsigned short stackVoltageArray[ARRAY_SIZE];
 unsigned short ambientTempArray[ARRAY_SIZE];
+unsigned short hydrogenArray[ARRAY_SIZE];
 
 // States
 int FC_State = FC_INITIAL; // initial state perhaps we could enumerate these
@@ -43,6 +44,7 @@ int FC_SubState = FC_STARTUP_STARTUP_PURGE;
   int stack_temp;
   int fc_current;
   int fc_voltage;
+  int tempInput;
 
 // ----------------- SETUP -----------------
 
@@ -82,10 +84,10 @@ void Check_Alarms() {
   // Temperature, Current, Voltage, Hydrogen are checked
 
   // Take measurements
-  ambientTempArray[arrayIndex] = analogRead(AMB_THEMRMISTOR_PIN);
-  stackTempArray[arrayIndex] = analogRead(STACK_THEMRMISTOR_PIN);
-  stackVoltageArray[arrayIndex] = analogRead(VOLTAGE_PIN);
-  stackCurrentArray[arrayIndex] = analogRead(CURRENT_PIN);
+  ambientTempArray[arrayIndex] = ambTemperatureComputation();
+  stackTempArray[arrayIndex] = temperatureComputation();
+  stackVoltageArray[arrayIndex] = voltageComputation();
+  stackCurrentArray[arrayIndex] = currentComputation();
   
   arrayIndex++;
   if(arrayIndex == ARRAY_SIZE){
@@ -428,10 +430,47 @@ void setColorState(int red, int green, int blue)
   
 }
 
-//void setColorFan(int red, int green, int blue)
-//{
-//  analogWrite(FAN_LED_RED,red);
-//  analogWrite(FAN_LED_BLUE, blue);
-//  analogWrite(FAN_LED_GREEN, green);
-//  
-//}
+int stackTemperatureComputation(){
+
+  double A_in = analogRead(STACK_THEMRMISTOR_PIN)*5/1023;
+  double R1 = (5*R2_STACK-A_in*R2_STACK)/A_in;
+  double temp = a_temp*R1^2 + b_temp*R1 + c_temp;
+ 
+  return (int) temp
+}
+
+int ambTemperatureComputation(){
+
+  double A_in = analogRead(AMBIENT_THEMRMISTOR_PIN)*5/1023;
+  double R1 = (5*R2_AMBIENT-A_in*R2_AMBIENT)/A_in;
+  double temp = a_temp*R1^2 + b_temp*R1 + c_temp;
+ 
+  return (int) temp
+}
+
+int voltageComputation(){
+
+  double V_v_in = analogRead(VOLTAGE_PIN)*5/1023;
+  double voltage = V_v_in*28.5/5;
+
+  return (int) voltage
+}
+
+int currentComputation(){
+
+  double V_c_in = analogRead(CURRENT_PIN)*5/1023;
+  double current = V_c_in * G;
+
+  return (int) current
+
+}
+
+int hydrogenComputation(){
+
+  double H_in = analogRead(HYDROGEN_PIN)*5/1023; // Determine later.
+  double hydrogen = 1;
+
+  return (int) hydrogen
+
+}
+

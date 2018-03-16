@@ -55,16 +55,12 @@
 // Alarm Thresholds TODO: set threshes
 #define FC_MIN_CURRENT 0 // A
 //#define FC_MAX_CURRENT 30 // A
-#define FC_MAX_CURRENT 800
 #define FC_STANDBY_MIN_VOLTAGE 0 // V
 #define FC_RUN_MIN_VOLTAGE 13 // V
-//#define FC_MAX_VOLTAGE 55 // V
-#define FC_MAX_VOLTAGE 800
+#define FC_MAX_VOLTAGE 55 // V
 #define FC_MAX_H2_READ 10 // ppm
-//#define FC_MIN_TEMP 15 // deg C 
-#define FC_MIN_TEMP -1
-//#define FC_MAX_TEMP 70 // deg C
-#define FC_MAX_TEMP 800
+#define FC_MIN_TEMP 15 // deg C 
+#define FC_MAX_TEMP 70 // deg C
 
 // Constant System Parameters
 #define PURGE_THRESHOLD 1026.0 //A*s
@@ -79,4 +75,13 @@
 #define FAN_SPEED_MEDIUM 600
 #define FAN_SPEED_HIGH 1000
 
+// ThermistorCurveCoefficientsForSteinhart-Hart.
+#define a_temp = 0.0052
+#define b_temp = -1.0979
+#define c_temp = 81.298
+
+#define R2_STACK = 60
+#define R2_AMBIENT = 60
+
+#define G = -78.125
 
