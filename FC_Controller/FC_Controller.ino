@@ -35,11 +35,11 @@ int FC_State = FC_INITIAL; // initial state perhaps we could enumerate these
 int FC_SubState = FC_STARTUP_STARTUP_PURGE;
 
 // Averaged values
-int amb_temp;
-int stack_temp;
-int fc_current;
-int fc_voltage;
-int tempInput;
+double amb_temp;
+double stack_temp;
+double fc_current;
+double fc_voltage;
+double tempInput;
 
 
 // ----------------- SETUP -----------------
@@ -74,10 +74,10 @@ void Check_Alarms() {
   // Temperature, Current, Voltage, Hydrogen are checked
 
   // Take measurements
-  ambientTempArray[arrayIndex] = ambTemperatureComputation();
-  stackTempArray[arrayIndex] = temperatureComputation();
-  stackVoltageArray[arrayIndex] = voltageComputation();
-  stackCurrentArray[arrayIndex] = currentComputation();
+  ambientTempArray[arrayIndex] = analogRead(AMBIENT_THEMRMISTOR_PIN);
+  stackTempArray[arrayIndex] = analogRead(STACK_THEMRMISTOR_PIN);
+  stackVoltageArray[arrayIndex] = analogRead(VOLTAGE_PIN_PIN);
+  stackCurrentArray[arrayIndex] = analogRead(CURRENT_PIN);
   
   arrayIndex++;
   if (arrayIndex == ARRAY_SIZE){
@@ -100,11 +100,11 @@ void Check_Alarms() {
     fc_current_total = fc_current_total + stackCurrentArray[i];
   }
   
-  // TODO: this are all raw values, need to be converted to limits in real numbers or all limits must be in 0-1023 scale
-  amb_temp = amb_temp_total/100;
-  stack_temp = stack_temp_total/100;
-  fc_current = fc_voltage_total/100;
-  fc_voltage = fc_current_total/100;
+// Uses the inputed raw data value to determine the actual values for ambient temp, stack temp, etc.
+  amb_temp = ambTemperatureComputation(amb_temp_total/100);
+  stack_temp = stackTemperatureComputation(stack_temp_total/100);
+  fc_voltage = voltageComputation(fc_voltage_total/100);
+  fc_current = currentComputation(fc_current_total/100);
   
   if (amb_temp < FC_MIN_TEMP || amb_temp > FC_MAX_TEMP)
     fc_alarm = true;
@@ -118,7 +118,6 @@ void Check_Alarms() {
   if (fc_voltage < FC_RUN_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
     fc_alarm = true;
 
-  getTemperature(); // TODO: This doesn't do anything
 }
 
 // ----------------- SYSTEM -----------------
@@ -332,19 +331,6 @@ boolean AutomaticPurgeControl() {
   }
 }
 
-// ----------------- TEMPERATURE CONTROL -----------------
-
-void getTemperature() {
-  /* C20
-  Reads the voltage, which is used to approximate the resistance, since the input voltage is
-  the controlled 5V output from the arduino. Steinhart_Hart then used to approximate temperature
-  Expected Input: Voltage from [0, 5V], or [0, 1024)
-  */
-  int vTemp = analogRead(STACK_THEMRMISTOR_PIN);
-  stackTempArray[stackTempPos] = vTemp;
-  stackTempPos = int((stackTempPos + 1) % ARRAY_SIZE);
-}
-
 // ----------------- CHANGE STATES FOR PURGE, SUPPLY, FAN, RELAY, RESISTOR -----------------
 void setPurgeState(int state) {
 	// !state means that when you "close" the valve it actually closes (sends 0 instead of 1)
@@ -369,8 +355,8 @@ void setResistorState(int state) {
 void setAllSafe() {
 	setResistorState(OPEN);
 	setRelayState(OPEN);
-	setSupplyState(OPEN);
-	setPurgeState(OPEN);
+	setSupplyState(CLOSED);
+	setPurgeState(CLOSED);
 	fanControl(OPEN, OPEN, OPEN);
 }
 
@@ -382,44 +368,44 @@ void setColorState(int red, int green, int blue) {
   analogWrite(STATE_LED_GREEN, green);
 }
 
-int stackTemperatureComputation(){
+int stackTemperatureComputation(int averageValue){
 
-  double A_in = analogRead(STACK_THEMRMISTOR_PIN)*5/1023;
+  double A_in = averageValue*5/1023;
   double R1 = (5*R2_STACK-A_in*R2_STACK)/A_in;
   double temp = a_temp*R1^2 + b_temp*R1 + c_temp;
  
   return (int) temp
 }
 
-int ambTemperatureComputation(){
+int ambTemperatureComputation(int averageValue){
 
-  double A_in = analogRead(AMBIENT_THEMRMISTOR_PIN)*5/1023;
+  double A_in = averageValue*5/1023;
   double R1 = (5*R2_AMBIENT-A_in*R2_AMBIENT)/A_in;
   double temp = a_temp*R1^2 + b_temp*R1 + c_temp;
  
   return (int) temp
 }
 
-int voltageComputation(){
+int voltageComputation(int averageValue){
 
-  double V_v_in = analogRead(VOLTAGE_PIN)*5/1023;
+  double V_v_in = averageValue*5/1023;
   double voltage = V_v_in*28.5/5;
 
   return (int) voltage
 }
 
-int currentComputation(){
+int currentComputation(int averageValue){
 
-  double V_c_in = analogRead(CURRENT_PIN)*5/1023;
+  double V_c_in = averageValue*5/1023;
   double current = V_c_in * G;
 
   return (int) current
 
 }
 
-int hydrogenComputation(){
+int hydrogenComputation(int averageValue){
 
-  double H_in = analogRead(HYDROGEN_PIN)*5/1023; // Determine later.
+  double H_in = averageValue*5/1023; // Determine later.
   double hydrogen = 1;
 
   return (int) hydrogen
