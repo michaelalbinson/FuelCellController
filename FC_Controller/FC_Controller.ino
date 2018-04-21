@@ -9,7 +9,7 @@ boolean fc_fan_time_set = false;
 boolean timer_time_set = false;
 boolean arrays_filled = false;
 
-// Program constants (determined via testing)
+// Program constants (determined via testing) TODO: VERIFY
 long STARTUP_PURGE_LOOP_COUNT = 5000;
 unsigned long Current_Time = 0; // would overflow after 25 days if left running forever (hopefully)
 long STANDBY_DELAY_TIME = 5000;
@@ -24,11 +24,13 @@ int arrayIndex = 0;
 // Fake Counters
 int count = 0;
 int stackTempPos = 0;
+
+// Sensor Arrays
 unsigned short stackTempArray[ARRAY_SIZE];
 unsigned short stackCurrentArray[ARRAY_SIZE];
 unsigned short stackVoltageArray[ARRAY_SIZE];
 unsigned short ambientTempArray[ARRAY_SIZE];
-unsigned short hydrogenArray[ARRAY_SIZE];
+//unsigned short hydrogenArray[ARRAY_SIZE];
 
 // States
 int FC_State = FC_INITIAL; // initial state perhaps we could enumerate these
@@ -51,13 +53,14 @@ void setup() {
   pinMode(PURGE_PIN, OUTPUT); // Purge, supply, FC relay, FC fan relay, and resistor relay.
   pinMode(SUPPLY_PIN, OUTPUT);
   pinMode(FC_RELAY_PIN, OUTPUT);
-  pinMode(FC_FAN_RELAY_PIN, OUTPUT);
+  pinMode(RELAY1, OUTPUT);
+  pinMode(RELAY2, OUTPUT);
+  pinMode(RELAY3, OUTPUT);
   pinMode(RESISTOR_PIN, OUTPUT);
 
   delay(100);
 
-  setRelayState(OPEN); // Open the relay (NC to circuit)
-  setResistorState(OPEN); // Open the resistor relay (NC to circuit)
+  setAllSafe();
 }
 
 // ----------------- LOOP -----------------
@@ -74,10 +77,11 @@ void Check_Alarms() {
   // Temperature, Current, Voltage, Hydrogen are checked
 
   // Take measurements
-  ambientTempArray[arrayIndex] = analogRead(AMBIENT_THEMRMISTOR_PIN);
+  ambientTempArray[arrayIndex] = analogRead(AMB_THEMRMISTOR_PIN);
   stackTempArray[arrayIndex] = analogRead(STACK_THEMRMISTOR_PIN);
-  stackVoltageArray[arrayIndex] = analogRead(VOLTAGE_PIN_PIN);
+  stackVoltageArray[arrayIndex] = analogRead(VOLTAGE_PIN);
   stackCurrentArray[arrayIndex] = analogRead(CURRENT_PIN);
+ // hydrogenArray[arrayIndex] = analogRead(HYDROGEN_PIN); NOT USED IN THIS ITERATION.
   
   arrayIndex++;
   if (arrayIndex == ARRAY_SIZE){
@@ -100,23 +104,38 @@ void Check_Alarms() {
     fc_current_total = fc_current_total + stackCurrentArray[i];
   }
   
-// Uses the inputed raw data value to determine the actual values for ambient temp, stack temp, etc.
+  // TODO: potential issue is that we switch states and then the array value are still too low...
+  // TODO: could enter alarm state erroneously, may need to allow a few loops between state changes
+
+  // Uses the inputed raw data value to determine the actual values for ambient temp, stack temp, etc.
   amb_temp = ambTemperatureComputation(amb_temp_total/100);
   stack_temp = stackTemperatureComputation(stack_temp_total/100);
   fc_voltage = voltageComputation(fc_voltage_total/100);
   fc_current = currentComputation(fc_current_total/100);
-  
-  if (amb_temp < FC_MIN_TEMP || amb_temp > FC_MAX_TEMP)
-    fc_alarm = true;
-
-  if (stack_temp < FC_MIN_TEMP || stack_temp > FC_MAX_TEMP)
-    fc_alarm = true;
 
   if (fc_current < FC_MIN_CURRENT || fc_current > FC_MAX_CURRENT)
     fc_alarm = true;
 
-  if (fc_voltage < FC_RUN_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
-    fc_alarm = true;
+  if (FC_State == FC_RUN) {
+    if (fc_voltage < FC_RUN_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
+      fc_alarm = true;
+
+    if (amb_temp < FC_RUN_MIN_TEMP || amb_temp > FC_MAX_TEMP)
+      fc_alarm = true;
+
+    if (stack_temp < FC_RUN_MIN_TEMP || stack_temp > FC_MAX_TEMP)
+      fc_alarm = true;
+  }
+  else {
+    if (fc_voltage < FC_STANDBY_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
+      fc_alarm = true;
+
+    if (amb_temp < FC_MIN_TEMP || amb_temp > FC_MAX_TEMP)
+      fc_alarm = true;
+
+    if (stack_temp < FC_MIN_TEMP || stack_temp > FC_MAX_TEMP)
+      fc_alarm = true;
+  }
 
 }
 
@@ -124,12 +143,18 @@ void Check_Alarms() {
 
 void System() {
   // wait for input to set fc_on to true
+  
+  if (!fc_on)
+    setColorState(256, 0, 256); // Sets state LED to magenta.
+  
   if (digitalRead(SYSTEM_ON_PIN) == HIGH) {
     fc_on = !fc_on;
     delay(1000); // to prevent us from flipping back and forth between on and off
     //TODO: counter or delay? delay may cause a delay in control before switching off which may not be ideal.
     // then again, turning the FC off kills the controller so I suppose it really doesn't matter
   }
+  
+  
 }
 
 // ----------------- FC -----------------
@@ -138,10 +163,16 @@ void FC() {
   if (fc_alarm)
     stateTransition(FC_State, FC_ALARM);
 
+  if (!fc_on) {
+    setAllSafe();
+    FC_State = FC_INITIAL;
+    return;
+  }
+
   // FSM
   switch (FC_State) {
     case (FC_INITIAL):
-      setColorState(200, 0, 0); // Shows in initial state.
+      setColorState(0, 256, 0); // Sets state LED to green.
 
       if (count > 1000) { // A timer to determine how long to be in this state.
         stateTransition(FC_INITIAL, FC_STANDBY);
@@ -153,7 +184,8 @@ void FC() {
       // The stack is not consuming reactant or delivering power
       // and all stack BOP actuators are in their safe state
       // The system remains in FC_STANDBY for STANDBY_DELAY_TIME
-      setColorState(200, 50, 0);
+      
+      setColorState(0, 0, 256); // Sets state LED to blue.
       
       if (!timer_time_set) {
         timer_start_time = Current_Time;
@@ -168,19 +200,19 @@ void FC() {
       }
       break;
 
-    case (FC_STARTUP):
+    case (FC_STARTUP): // TODO: I changed this but we need to make sure that it is right in terms of the relay states
       // The stack goes from FC_STANDBY to a state where current can
       // safely be drawn from the stack
-      setResistorState(CLOSED); // Close the resistor relay as we have reached a stage where we no longer need the start up resistor.
-      setRelayState(CLOSED); // Close the state relay.
-
+      setColorState(256, 256, 0); // Sets state LED to yellow.
       FCStartup();
       break;
 
     case (FC_RUN):
       // ?? manual info is copied from FC_STANDBY
       setSupplyState(OPEN); // The supply value should always be open.
-      setColorState(0, 200, 0);
+      setRelayState(CLOSED); // TODO: right?
+      
+      setColorState(0, 256, 256); // Sets state LED to cyan.
       
       if (!fc_on)
         stateTransition(FC_RUN, FC_SHUTDOWN);
@@ -192,7 +224,8 @@ void FC() {
     case (FC_SHUTDOWN):
       // The stack goes from FC_RUN to FC_STANDBY. The system remains in
       // FC_SHUTDOWN for SHUTDOWN_DELAY_TIME
-      setColorState(0, 0, 200);
+      
+      setColorState(256, 256, 256); // Sets state LED to white.
       
       if (!timer_time_set) {
         timer_start_time = Current_Time;
@@ -215,7 +248,9 @@ void FC() {
       // in the event of an alarm... we could specify the alert via a Serial.println if we really
       // wanted but we could also build a visual representation of the system that failed
       setAllSafe();
-      setColorState(100, 0, 100);
+      
+      setColorState(256, 0, 0); // Sets state LED to red.
+      
       break;
 
     default:
@@ -252,10 +287,10 @@ void FCStartup() {
       // for the start-up purge and the start-up resistor is applied
       // across the stack to limit voltage
 
-      digitalWrite(PURGE_PIN,HIGH);
-      digitalWrite(SUPPLY_PIN,HIGH);
-      
-      setColorState(200, 150, 0);
+      setPurgeState(OPEN);
+      setSupplyState(OPEN);
+      setResistorState(CLOSED); // Close the resistor relay as we have reached a stage where we no longer need the start up resistor.
+      setRelayState(OPEN); // Close the state relay.
       
       if (!fc_fan_time_set) {
         purge_counter = Current_Time;
@@ -265,8 +300,8 @@ void FCStartup() {
       if (STARTUP_PURGE_LOOP_COUNT <= Current_Time - purge_counter) {
         fc_fan_time_set = false;
         
-        digitalWrite(PURGE_PIN,LOW);
-        digitalWrite(SUPPLY_PIN,LOW);
+        setPurgeState(CLOSED);
+        setSupplyState(CLOSED);
         
         subStateTransition(FC_SubState, FC_STARTUP_END);
         return;
@@ -278,10 +313,13 @@ void FCStartup() {
       // fan is minimum
       fc_fan_time_set = false;
       purge_counter = 1;
-      setColorState(200, 200, 0);
       stateTransition(FC_State, FC_RUN);
-      subStateTransition(FC_SubState, FC_STARTUP_FAN_SPOOLUP); // switch back to startup purge
-      fanControl(LOW, LOW, LOW);
+      subStateTransition(FC_SubState, FC_STARTUP_STARTUP_PURGE); // switch back to startup purge
+        //TODO: right thing to do at the end right?
+      setResistorState(OPEN); // Open the resistor relay as we have reached a stage where we no longer need the start up resistor.
+      setRelayState(OPEN); // Close the system relay, start the damn thing.
+
+      fanControl(CLOSED, OPEN, OPEN); // TODO: this was an arbitrary choice, what is correct? I supposr automatic fan control takes care of it
       break;
   }
 }
@@ -311,13 +349,13 @@ void AutomaticFanControl(int current, int temp_average) {
 }
 
 void fanControl(boolean relayOneState, boolean relayTwoState, boolean relayThreeState) {
-	digitalWrite(RELAY1, relayOneState);
+    digitalWrite(RELAY1, relayOneState);
     digitalWrite(RELAY2, relayTwoState);
     digitalWrite(RELAY3, relayThreeState);
 }
 
 // ----------------- PURGE CONTROL -----------------
-
+// TODO: use amperage threshhold, this may or may not work
 boolean AutomaticPurgeControl() {
   long time_purge = millis() - purgeLastCallTime;
 
@@ -363,51 +401,48 @@ void setAllSafe() {
 // ----------------- CONTROL OF RGB LEDs -----------------
 
 void setColorState(int red, int green, int blue) {
-  analogWrite(STATE_LED_RED,red);
+  analogWrite(STATE_LED_RED, red);
   analogWrite(STATE_LED_BLUE, blue);
   analogWrite(STATE_LED_GREEN, green);
 }
 
+// TODO: are these A B anc C values the same for both sensors????
 int stackTemperatureComputation(int averageValue){
-
-  double A_in = averageValue*5/1023;
+  double A_in = averageValue*5/1023; // ??? not sure this is right need more descriptive var names
   double R1 = (5*R2_STACK-A_in*R2_STACK)/A_in;
-  double temp = a_temp*R1^2 + b_temp*R1 + c_temp;
+  double temp = a_temp*R1*R1 + b_temp*R1 + c_temp;
  
-  return (int) temp
+  return (int) temp;
 }
 
 int ambTemperatureComputation(int averageValue){
-
   double A_in = averageValue*5/1023;
   double R1 = (5*R2_AMBIENT-A_in*R2_AMBIENT)/A_in;
-  double temp = a_temp*R1^2 + b_temp*R1 + c_temp;
+  double temp = a_temp*R1*R1 + b_temp*R1 + c_temp;
  
-  return (int) temp
+  return (int) temp;
 }
 
 int voltageComputation(int averageValue){
-
   double V_v_in = averageValue*5/1023;
-  double voltage = V_v_in*28.5/5;
+  double voltage = V_v_in*28.5/5; //TODO: not sure this ratio is right
 
-  return (int) voltage
+  return (int) voltage;
 }
 
-int currentComputation(int averageValue){
+int currentComputation(int averageValue) {
+  double V_c_in = averageValue*5/1023; // this gets the value in V but not the actual current
+  double current = V_c_in * G; // TODO: determine G, this ratio is currently incorrect (100A/50mV) (this does not get actual current)
 
-  double V_c_in = averageValue*5/1023;
-  double current = V_c_in * G;
-
-  return (int) current
-
-}
-
-int hydrogenComputation(int averageValue){
-
-  double H_in = averageValue*5/1023; // Determine later.
-  double hydrogen = 1;
-
-  return (int) hydrogen
+  return (int) current;
 
 }
+
+//int hydrogenComputation(int averageValue){
+//
+//  double H_in = averageValue*5/1023; // Determine later.
+//  double hydrogen = 1;
+//
+//  return (int) hydrogen
+//
+//}
