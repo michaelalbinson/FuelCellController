@@ -60,7 +60,7 @@ void setup() {
   pinMode(RESISTOR_PIN, OUTPUT);
 
   delay(100);
- 
+
   setAllSafe();
 }
 
@@ -98,12 +98,15 @@ void Check_Alarms() {
   unsigned long stack_temp_total = 0;
   unsigned long fc_voltage_total = 0;
   unsigned long fc_current_total = 0;
+  //unsigned long amb_hydrogen_total = 0;
+
 
   for (int i = 0; i < ARRAY_SIZE; i++) {
     amb_temp_total = amb_temp_total + ambientTempArray[i];
     stack_temp_total = stack_temp_total + stackTempArray[i];
     fc_voltage_total = fc_voltage_total + stackVoltageArray[i];
     fc_current_total = fc_current_total + stackCurrentArray[i];
+    //amb_hydrogen_total = amb_hydrogen_total + hydrogenArray[i];
   }
 
   // TODO: potential issue is that we switch states and then the array value are still too low...
@@ -114,30 +117,33 @@ void Check_Alarms() {
   stack_temp = stackTemperatureComputation(stack_temp_total / 100);
   fc_voltage = voltageComputation(fc_voltage_total / 100);
   fc_current = currentComputation(fc_current_total / 100);
+  //amb_hydrogen = hydrogenComputation(amb_hydrogen_total / 100);
 
-//  if (fc_current < FC_MIN_CURRENT || fc_current > FC_MAX_CURRENT)
-//    fc_alarm = true;
-//
-//  if (FC_State == FC_RUN) {
-//    if (fc_voltage < FC_RUN_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
-//      fc_alarm = true;
-//
-//    if (amb_temp < FC_RUN_MIN_TEMP || amb_temp > FC_MAX_TEMP)
-//      fc_alarm = true;
-//
-//    if (stack_temp < FC_RUN_MIN_TEMP || stack_temp > FC_MAX_TEMP)
-//      fc_alarm = true;
-//  }
-//  else {
-//    if (fc_voltage < FC_STANDBY_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
-//      fc_alarm = true;
-//
-//    if (amb_temp < FC_MIN_TEMP || amb_temp > FC_MAX_TEMP)
-//      fc_alarm = true;
-//
-//    if (stack_temp < FC_MIN_TEMP || stack_temp > FC_MAX_TEMP)
-//      fc_alarm = true;
-//  }
+  //if (amb_hydrogen > HYDROGEN_MAX) //Always checking for hydrogen leaking so checks in every state
+  //  fc_alarm = true;
+  if (fc_current < FC_MIN_CURRENT || fc_current > FC_MAX_CURRENT)
+    fc_alarm = true;
+
+  if (FC_State == FC_RUN) {
+    if (fc_voltage < FC_RUN_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
+      fc_alarm = true;
+
+    if (amb_temp < FC_RUN_MIN_TEMP || amb_temp > FC_MAX_TEMP)
+      fc_alarm = true;
+
+    if (stack_temp < FC_RUN_MIN_TEMP || stack_temp > FC_MAX_TEMP)
+      fc_alarm = true;
+  }
+  else {
+    if (fc_voltage < FC_STANDBY_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
+      fc_alarm = true;
+
+    if (amb_temp < FC_MIN_TEMP || amb_temp > FC_MAX_TEMP)
+      fc_alarm = true;
+
+    if (stack_temp < FC_MIN_TEMP || stack_temp > FC_MAX_TEMP)
+      fc_alarm = true;
+  }
 
 }
 
@@ -187,7 +193,7 @@ void FC() {
       // The stack is not consuming reactant or delivering power
       // and all stack BOP actuators are in their safe state
       // The system remains in FC_STANDBY for STANDBY_DELAY_TIME
-        
+
       setColorState(0, 0, LED_ON); // Sets state LED to blue.
 
       if (!timer_time_set) {
@@ -360,23 +366,11 @@ void AutomaticFanControl(int current, int temp_average) {
         fanControl(FAN_MAX);
         FAN_State = FAN_MAX;
       }
-      else if (temp_average > temp_opt && temp_average <= temp_max - 2) { //MID_HIGH
-        fanControl(FAN_MID_HIGH);
-        FAN_State =FAN_MID_HIGH;
-      }
       break;
     case FAN_MID_HIGH:
       if (temp_average > temp_opt && temp_average <= temp_max - 2) {//MID_HIGH
         fanControl(FAN_MID_HIGH);
         FAN_State =FAN_MID_HIGH;
-      }
-      else if (temp_average >= temp_max || temp_average > 73) { //MAX
-        fanControl(FAN_MAX);
-        FAN_State =FAN_MAX;
-      }
-      else if (temp_average >= temp_opt - 2 && temp_average <= temp_opt + 2) { // Perfect temp //MID
-        fanControl(FAN_MID);
-        FAN_State =FAN_MID;
       }
       break;
     case FAN_MID:
@@ -384,29 +378,11 @@ void AutomaticFanControl(int current, int temp_average) {
         fanControl(FAN_MID);
         FAN_State =FAN_MID;
       }
-      else if (temp_average > temp_opt && temp_average <= temp_max - 2) {//MID_HIGH
-        fanControl(FAN_MID_HIGH);
-        FAN_State =FAN_MID_HIGH;
-      }
-
-      else if (temp_average <= temp_opt && temp_average <= temp_min + 2) { // Kinda cold.//MID_LOW
-        fanControl(FAN_MID_LOW);
-        FAN_State =FAN_MID_LOW;
-      }
       break;
     case FAN_MID_LOW:
       if (temp_average <= temp_opt && temp_average <= temp_min + 2) { // Kinda cold.//MID_LOW
         fanControl(FAN_MID_LOW);
         FAN_State =FAN_MID_LOW;
-      }
-      else if (temp_average >= temp_opt - 2 && temp_average <= temp_opt + 2) { // Perfect temp //MID
-        fanControl(FAN_MID);
-        FAN_State =FAN_MID;
-      }
-
-      else if (temp_average < temp_min + 2) { // Too cold. //MIN
-        fanControl(FAN_MIN);
-        FAN_State =FAN_MIN;
       }
       break;
     case FAN_MIN: //STACK IS COLD
@@ -414,11 +390,6 @@ void AutomaticFanControl(int current, int temp_average) {
         fanControl(FAN_MIN);
         FAN_State =FAN_MIN;
       }
-      else if (temp_average <= temp_opt && temp_average <= temp_min + 2) { // Kinda cold.//MID_LOW
-        fanControl(FAN_MID_LOW);
-        FAN_State =FAN_MID_LOW;
-      }
-
       break;
     default:
       fanControl(FAN_MAX);
@@ -494,7 +465,7 @@ void setResistorState(int state) {
 
 void setAllSafe(void) {
   fanControl(FAN_OFF);
-  
+
   setSupplyState(CLOSED);
   setPurgeState(CLOSED);
   setRelayState(OPEN);
@@ -544,7 +515,7 @@ int currentComputation(int averageValue) {
 //int hydrogenComputation(int averageValue){
 //
 //  double H_in = averageValue*5/1023; // Determine later.
-//  double hydrogen = 1;
+//  double hydrogen = H_in * H_CONST;
 //
 //  return (int) hydrogen
 //

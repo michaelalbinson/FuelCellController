@@ -55,6 +55,7 @@
 #define FC_RUN_MIN_TEMP   0 // deg C 
 #define FC_MIN_TEMP       15 // deg C 
 #define FC_MAX_TEMP       75 // deg C
+#define HYDROGEN_MAX      4.5//
 
 // Constant System Parameters
 #define PURGE_THRESHOLD   1026.0 //A*s
@@ -79,5 +80,7 @@
 #define R2_STACK 60
 #define R2_AMBIENT 60
 
-// TODO: redetermine gain value
+//gain value(Current Sens)
 #define G 22.0605 //AnalogIn=9.2745Current+1.2991 ->Max Amps reading at 1023= 110.3A -> 110.3/5=22.06
+//Hydrogen Const
+#define H_CONST 1 //Data sheet shows a linear relation. Set to one for now
