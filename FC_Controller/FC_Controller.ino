@@ -125,22 +125,22 @@ void Check_Alarms() {
     fc_alarm = true;
 
   if (FC_State == FC_RUN) {
-    if (fc_voltage < FC_RUN_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
-      fc_alarm = true;
-
-    if (amb_temp < FC_RUN_MIN_TEMP || amb_temp > FC_MAX_TEMP)
-      fc_alarm = true;
-
-    if (stack_temp < FC_RUN_MIN_TEMP || stack_temp > FC_MAX_TEMP)
-      fc_alarm = true;
+    //    if (fc_voltage < FC_RUN_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
+    //      fc_alarm = true;
+    //
+    //    if (amb_temp < FC_RUN_MIN_TEMP || amb_temp > FC_MAX_TEMP)
+    //      fc_alarm = true;
+    //
+    //    if (stack_temp < FC_RUN_MIN_TEMP || stack_temp > FC_MAX_TEMP)
+    //      fc_alarm = true;
   }
   else {
-    if (fc_voltage < FC_STANDBY_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
-      fc_alarm = true;
-
-    if (amb_temp < FC_MIN_TEMP || amb_temp > FC_MAX_TEMP)
-      fc_alarm = true;
-
+    //    if (fc_voltage < FC_STANDBY_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
+    //      fc_alarm = true;
+    //
+    //    if (amb_temp < FC_MIN_TEMP || amb_temp > FC_MAX_TEMP)
+    //      fc_alarm = true;
+    //
     if (stack_temp < FC_MIN_TEMP || stack_temp > FC_MAX_TEMP)
       fc_alarm = true;
   }
@@ -338,27 +338,8 @@ void AutomaticFanControl(int current, int temp_average) {
   int temp_max = 0.3442 * current + 52.143;
   int temp_min = 0.531 * current + 6.0025;
 
-  if (temp_average >= temp_max || temp_average > 73) { //MAX
-    fanControl(FAN_MAX);
-  }
 
-  else if (temp_average > temp_opt && temp_average <= temp_max - 2) {//MID_HIGH
-    fanControl(FAN_MID_HIGH);
-  }
-  else if (temp_average >= temp_opt - 2 && temp_average <= temp_opt + 2) { // Perfect temp //MID
-    fanControl(FAN_MID);
-  }
-  else if (temp_average <= temp_opt && temp_average <= temp_min + 2) { // Kinda cold.//MID_LOW
-    fanControl(FAN_MID_LOW);
-  }
-  else if (temp_average < temp_min + 2) { // Too cold. //MIN
-    fanControl(FAN_MIN);
-  }
-  else {
-    fanControl(FAN_MAX);//If something is wrong and we get through all the cases FAN to MAX
-  }
-  /*
-    switch (FAN_State) {
+  switch (FAN_State) {
     case FAN_MAX: //STACK IS HOT
       if (temp_average >= temp_max || temp_average > 73) { //MAX
         fanControl(FAN_MAX);
@@ -368,32 +349,57 @@ void AutomaticFanControl(int current, int temp_average) {
     case FAN_MID_HIGH:
       if (temp_average > temp_opt && temp_average <= temp_max - 2) {//MID_HIGH
         fanControl(FAN_MID_HIGH);
-        FAN_State =FAN_MID_HIGH;
+        FAN_State = FAN_MID_HIGH;
       }
       break;
     case FAN_MID:
       if (temp_average >= temp_opt - 2 && temp_average <= temp_opt + 2) { // Perfect temp //MID
         fanControl(FAN_MID);
-        FAN_State =FAN_MID;
+        FAN_State = FAN_MID;
       }
       break;
     case FAN_MID_LOW:
       if (temp_average <= temp_opt && temp_average <= temp_min + 2) { // Kinda cold.//MID_LOW
         fanControl(FAN_MID_LOW);
-        FAN_State =FAN_MID_LOW;
+        FAN_State = FAN_MID_LOW;
       }
       break;
     case FAN_MIN: //STACK IS COLD
       if (temp_average < temp_min + 2) { // Too cold. //MIN
         fanControl(FAN_MIN);
-        FAN_State =FAN_MIN;
+        FAN_State = FAN_MIN;
       }
       break;
     default:
       fanControl(FAN_MAX);
       break;
-    }
-  */
+  }
+  if (temp_average >= temp_max || temp_average > 73) { //MAX
+    fanControl(FAN_MAX);
+    FAN_State =FAN_MAX;
+  }
+
+  else if (temp_average > temp_opt && temp_average <= temp_max - 2) {//MID_HIGH
+    fanControl(FAN_MID_HIGH);
+    FAN_State =FAN_MID_HIGH;
+  }
+  else if (temp_average >= temp_opt - 2 && temp_average <= temp_opt + 2) { // Perfect temp //MID
+    fanControl(FAN_MID);
+    FAN_State =FAN_MID;
+  }
+  else if (temp_average <= temp_opt && temp_average <= temp_min + 2) { // Kinda cold.//MID_LOW
+    fanControl(FAN_MID_LOW);
+    FAN_State =FAN_MID_LOW;
+  }
+  else if (temp_average < temp_min + 2) { // Too cold. //MIN
+    fanControl(FAN_MIN);
+    FAN_State =FAN_MIN;
+  }
+  else {
+    fanControl(FAN_MAX);//If something is wrong and we get through all the cases FAN to MAX
+    FAN_State =FAN_MAX;
+  }
+
 }
 
 void fanControl(int FAN_SPEED) {
