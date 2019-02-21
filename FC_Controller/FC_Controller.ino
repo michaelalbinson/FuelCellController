@@ -83,7 +83,7 @@ void Check_Alarms() {
   stackTempArray[arrayIndex] = analogRead(STACK_THEMRMISTOR_PIN);
   stackVoltageArray[arrayIndex] = analogRead(VOLTAGE_PIN);
   stackCurrentArray[arrayIndex] = analogRead(CURRENT_PIN);
-  // hydrogenArray[arrayIndex] = analogRead(HYDROGEN_PIN); NOT USED IN THIS ITERATION.
+// hydrogenArray[arrayIndex] = analogRead(HYDROGEN_PIN); NOT USED IN THIS ITERATION.
 
   arrayIndex++;
   if (arrayIndex == ARRAY_SIZE) {
@@ -121,26 +121,26 @@ void Check_Alarms() {
 
   //if (amb_hydrogen > HYDROGEN_MAX) //Always checking for hydrogen leaking so checks in every state
   //  fc_alarm = true;
-  if (fc_current < FC_MIN_CURRENT || fc_current > FC_MAX_CURRENT)
-    fc_alarm = true;
-
+//  if (fc_current < FC_MIN_CURRENT || fc_current > FC_MAX_CURRENT)
+//    fc_alarm = true;
+//
   if (FC_State == FC_RUN) {
-    //    if (fc_voltage < FC_RUN_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
-    //      fc_alarm = true;
-    //
-    //    if (amb_temp < FC_RUN_MIN_TEMP || amb_temp > FC_MAX_TEMP)
-    //      fc_alarm = true;
-    //
-    //    if (stack_temp < FC_RUN_MIN_TEMP || stack_temp > FC_MAX_TEMP)
-    //      fc_alarm = true;
+//    if (fc_voltage < FC_RUN_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
+//      fc_alarm = true;
+//
+//    if (amb_temp < FC_RUN_MIN_TEMP || amb_temp > FC_MAX_TEMP)
+//      fc_alarm = true;
+
+    if (stack_temp < FC_RUN_MIN_TEMP || stack_temp > FC_MAX_TEMP)
+      fc_alarm = true;
   }
   else {
-    //    if (fc_voltage < FC_STANDBY_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
-    //      fc_alarm = true;
-    //
-    //    if (amb_temp < FC_MIN_TEMP || amb_temp > FC_MAX_TEMP)
-    //      fc_alarm = true;
-    //
+//    if (fc_voltage < FC_STANDBY_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
+//      fc_alarm = true;
+//
+//    if (amb_temp < FC_MIN_TEMP || amb_temp > FC_MAX_TEMP)
+//      fc_alarm = true;
+//
     if (stack_temp < FC_MIN_TEMP || stack_temp > FC_MAX_TEMP)
       fc_alarm = true;
   }
@@ -376,28 +376,28 @@ void AutomaticFanControl(int current, int temp_average) {
   }
   if (temp_average >= temp_max || temp_average > 73) { //MAX
     fanControl(FAN_MAX);
-    FAN_State =FAN_MAX;
+    FAN_State = FAN_MAX;
   }
 
   else if (temp_average > temp_opt && temp_average <= temp_max - 2) {//MID_HIGH
     fanControl(FAN_MID_HIGH);
-    FAN_State =FAN_MID_HIGH;
+    FAN_State = FAN_MID_HIGH;
   }
   else if (temp_average >= temp_opt - 2 && temp_average <= temp_opt + 2) { // Perfect temp //MID
     fanControl(FAN_MID);
-    FAN_State =FAN_MID;
+    FAN_State = FAN_MID;
   }
   else if (temp_average <= temp_opt && temp_average <= temp_min + 2) { // Kinda cold.//MID_LOW
     fanControl(FAN_MID_LOW);
-    FAN_State =FAN_MID_LOW;
+    FAN_State = FAN_MID_LOW;
   }
   else if (temp_average < temp_min + 2) { // Too cold. //MIN
     fanControl(FAN_MIN);
-    FAN_State =FAN_MIN;
+    FAN_State = FAN_MIN;
   }
   else {
     fanControl(FAN_MAX);//If something is wrong and we get through all the cases FAN to MAX
-    FAN_State =FAN_MAX;
+    FAN_State = FAN_MAX;
   }
 
 }
@@ -488,15 +488,15 @@ void setColorState(int red, int yellow, int blue) {
 int stackTemperatureComputation(int averageValue) {
   double A_in = averageValue * 5 / 1023; // ??? not sure this is right need more descriptive var names
   double R1 = (5 * R2_STACK - A_in * R2_STACK) / A_in;
-  double temp = a_temp * R1 * R1 + b_temp * R1 + c_temp;
-
+  double temp = 1/(a_temp+(b_temp*log(R1))+c_temp*log(R1)*log(R1)*log(R1))-273.15;
+  
   return (int) temp;
 }
 
 int ambTemperatureComputation(int averageValue) {
   double A_in = averageValue * 5 / 1023;
   double R1 = (5 * R2_AMBIENT - A_in * R2_AMBIENT) / A_in;
-  double temp = a_temp * R1 * R1 + b_temp * R1 + c_temp;
+  double temp= 1/(a_temp+(b_temp*log(R1))+c_temp*log(R1)*log(R1)*log(R1))-273.15;//temp = a_temp * R1 * R1 + b_temp * R1 + c_temp;
 
   return (int) temp;
 }

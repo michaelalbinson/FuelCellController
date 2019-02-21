@@ -51,7 +51,7 @@
 #define FC_STANDBY_MIN_VOLTAGE 0 // V
 #define FC_RUN_MIN_VOLTAGE  13 // V
 #define FC_MAX_VOLTAGE    28 // V
-#define FC_MAX_H2_READ    10 // ppm
+#define FC_MAX_H2_READ     10 // ppm
 #define FC_RUN_MIN_TEMP   0 // deg C 
 #define FC_MIN_TEMP       15 // deg C 
 #define FC_MAX_TEMP       75 // deg C
@@ -73,12 +73,12 @@
 #define FAN_OFF       0
 
 // ThermistorCurveCoefficientsForSteinhart-Hart.
-#define a_temp 0.0052
-#define b_temp -1.0979
-#define c_temp 81.298
+#define a_temp 0.000757//0.0052
+#define b_temp 0.000274//-1.0979
+#define c_temp 0.000000127//81.298
 
-#define R2_STACK 60
-#define R2_AMBIENT 60
+#define R2_STACK 10000//Originally 60
+#define R2_AMBIENT 10000 //Originally 60
 
 //gain value(Current Sens)
 #define G 22.0605 //AnalogIn=9.2745Current+1.2991 ->Max Amps reading at 1023= 110.3A -> 110.3/5=22.06
