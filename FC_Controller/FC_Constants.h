@@ -1,3 +1,5 @@
+
+
 // FC States
 #define FC_INITIAL 0
 #define FC_STANDBY 1
@@ -42,9 +44,6 @@
 #define OPEN 0
 #define CLOSED 1
 
-// Other
-#define ARRAY_SIZE 100
-
 // Alarm Thresholds TODO: set threshes
 #define FC_MIN_CURRENT    0 // A
 #define FC_MAX_CURRENT    55 // A
@@ -71,6 +70,52 @@
 #define FAN_MID_LOW   2
 #define FAN_MIN       1
 #define FAN_OFF       0
+
+
+// Flags
+boolean fc_on = false;
+boolean fc_alarm = false;
+boolean fc_fan_time_set = false;
+boolean timer_time_set = false;
+boolean arrays_filled = false;
+
+// Program constants (determined via testing) TODO: VERIFY
+long STARTUP_PURGE_LOOP_COUNT = 5000;
+unsigned long Current_Time = 0; // would overflow after 25 days if left running forever (hopefully)
+long STANDBY_DELAY_TIME = 5000;
+long SHUTDOWN_DELAY_TIME = 5000;
+
+// Counters
+long timer_start_time = 0;
+int purge_counter = 1;
+long purgeLastCallTime = 0;
+int arrayIndex = 0;
+
+// Fake Counters
+int fanCount = 0;
+int count = 0;
+int stackTempPos = 0;
+
+// Sensor Arrays
+#define ARRAY_SIZE 100
+unsigned short stackTempArray[ARRAY_SIZE];
+unsigned short stackCurrentArray[ARRAY_SIZE];
+unsigned short stackVoltageArray[ARRAY_SIZE];
+unsigned short ambientTempArray[ARRAY_SIZE];
+unsigned short hydrogenArray[ARRAY_SIZE];
+
+// States
+int FC_State = FC_INITIAL; // initial state perhaps we could enumerate these
+int FC_SubState = FC_STARTUP_STARTUP_PURGE;
+int FAN_State = FAN_MID; //First Fan state assumed is MID
+
+// Averaged values
+double amb_temp;
+double stack_temp;
+double fc_current;
+double fc_voltage;
+double amb_hydrogen;
+double tempInput;
 
 // ThermistorCurveCoefficientsForSteinhart-Hart.
 #define a_temp 0.000757//0.0052
