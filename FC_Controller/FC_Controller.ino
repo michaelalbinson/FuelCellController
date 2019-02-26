@@ -29,7 +29,7 @@ unsigned short stackTempArray[ARRAY_SIZE];
 unsigned short stackCurrentArray[ARRAY_SIZE];
 unsigned short stackVoltageArray[ARRAY_SIZE];
 unsigned short ambientTempArray[ARRAY_SIZE];
-//unsigned short hydrogenArray[ARRAY_SIZE];
+unsigned short hydrogenArray[ARRAY_SIZE];
 
 // States
 int FC_State = FC_INITIAL; // initial state perhaps we could enumerate these
@@ -41,7 +41,7 @@ double amb_temp;
 double stack_temp;
 double fc_current;
 double fc_voltage;
-double amb_hydrogen;
+double tempInput;
 
 
 // ----------------- SETUP -----------------
@@ -82,7 +82,7 @@ void Check_Alarms() {
   stackTempArray[arrayIndex] = analogRead(STACK_THEMRMISTOR_PIN);
   stackVoltageArray[arrayIndex] = analogRead(VOLTAGE_PIN);
   stackCurrentArray[arrayIndex] = analogRead(CURRENT_PIN);
-// hydrogenArray[arrayIndex] = analogRead(HYDROGEN_PIN); NOT USED IN THIS ITERATION.
+hydrogenArray[arrayIndex] = analogRead(HYDROGEN_PIN); NOT USED IN THIS ITERATION.
 
   arrayIndex++;
   if (arrayIndex == ARRAY_SIZE) {
@@ -97,7 +97,7 @@ void Check_Alarms() {
   unsigned long stack_temp_total = 0;
   unsigned long fc_voltage_total = 0;
   unsigned long fc_current_total = 0;
-  //unsigned long amb_hydrogen_total = 0;
+  unsigned long amb_hydrogen_total = 0;
 
 
   for (int i = 0; i < ARRAY_SIZE; i++) {
@@ -105,7 +105,7 @@ void Check_Alarms() {
     stack_temp_total = stack_temp_total + stackTempArray[i];
     fc_voltage_total = fc_voltage_total + stackVoltageArray[i];
     fc_current_total = fc_current_total + stackCurrentArray[i];
-    //amb_hydrogen_total = amb_hydrogen_total + hydrogenArray[i];
+    amb_hydrogen_total = amb_hydrogen_total + hydrogenArray[i];
   }
 
   // TODO: potential issue is that we switch states and then the array value are still too low...
@@ -116,7 +116,7 @@ void Check_Alarms() {
   stack_temp = stackTemperatureComputation(stack_temp_total / 100);
   fc_voltage = voltageComputation(fc_voltage_total / 100);
   fc_current = currentComputation(fc_current_total / 100);
-  //amb_hydrogen = hydrogenComputation(amb_hydrogen_total / 100);
+  amb_hydrogen = hydrogenComputation(amb_hydrogen_total / 100);
 
   //if (amb_hydrogen > HYDROGEN_MAX) //Always checking for hydrogen leaking so checks in every state
   //  fc_alarm = true;
@@ -515,11 +515,11 @@ int currentComputation(int averageValue) {
 
 }
 
-//int hydrogenComputation(int averageValue){
-//
-//  double H_in = averageValue*5/1023; // Determine later.
-//  double hydrogen = H_in * H_CONST;
-//
-//  return (int) hydrogen
-//
-//}
+int hydrogenComputation(int averageValue){
+
+ double H_in = averageValue*5/1023; // Determine later.
+ double hydrogen = H_in * H_CONST;
+
+ return (int) hydrogen
+
+}
