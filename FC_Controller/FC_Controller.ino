@@ -82,7 +82,7 @@ void Check_Alarms() {
   stackTempArray[arrayIndex] = analogRead(STACK_THEMRMISTOR_PIN);
   stackVoltageArray[arrayIndex] = analogRead(VOLTAGE_PIN);
   stackCurrentArray[arrayIndex] = analogRead(CURRENT_PIN);
-hydrogenArray[arrayIndex] = analogRead(HYDROGEN_PIN); NOT USED IN THIS ITERATION.
+  hydrogenArray[arrayIndex] = analogRead(HYDROGEN_PIN); NOT USED IN THIS ITERATION.
 
   arrayIndex++;
   if (arrayIndex == ARRAY_SIZE) {
