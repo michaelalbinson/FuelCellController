@@ -23,7 +23,6 @@ int arrayIndex = 0;
 
 // Fake Counters
 int count = 0;
-int stackTempPos = 0;
 
 // Sensor Arrays
 unsigned short stackTempArray[ARRAY_SIZE];
@@ -42,7 +41,7 @@ double amb_temp;
 double stack_temp;
 double fc_current;
 double fc_voltage;
-double tempInput;
+double amb_hydrogen;
 
 
 // ----------------- SETUP -----------------
