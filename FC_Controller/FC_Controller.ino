@@ -38,7 +38,7 @@ int FAN_State = FAN_MID; //First Fan state assumed is MID
 
 // Averaged values
 double amb_temp;
-double stack_temp;
+int stack_temp;
 double fc_current;
 double fc_voltage;
 double tempInput;
@@ -46,6 +46,8 @@ double tempInput;
 
 // ----------------- SETUP -----------------
 void setup() {
+  Serial.begin(9600);
+
   pinMode(STATE_LED_RED, OUTPUT); // State LED. //Red
   pinMode(STATE_LED_YELLOW, OUTPUT); //Yellow
   pinMode(STATE_LED_BLUE, OUTPUT); //Blue
@@ -61,6 +63,7 @@ void setup() {
   delay(100);
 
   setAllSafe();
+
 }
 
 // ----------------- LOOP -----------------
@@ -80,6 +83,8 @@ void Check_Alarms() {
   // Take measurements
   ambientTempArray[arrayIndex] = analogRead(AMB_THEMRMISTOR_PIN);
   stackTempArray[arrayIndex] = analogRead(STACK_THEMRMISTOR_PIN);
+  Serial.print("AR: ");
+  Serial.println( analogRead(STACK_THEMRMISTOR_PIN));
   stackVoltageArray[arrayIndex] = analogRead(VOLTAGE_PIN);
   stackCurrentArray[arrayIndex] = analogRead(CURRENT_PIN);
   hydrogenArray[arrayIndex] = analogRead(HYDROGEN_PIN); NOT USED IN THIS ITERATION.
@@ -99,7 +104,6 @@ void Check_Alarms() {
   unsigned long fc_current_total = 0;
   unsigned long amb_hydrogen_total = 0;
 
-
   for (int i = 0; i < ARRAY_SIZE; i++) {
     amb_temp_total = amb_temp_total + ambientTempArray[i];
     stack_temp_total = stack_temp_total + stackTempArray[i];
@@ -107,6 +111,8 @@ void Check_Alarms() {
     fc_current_total = fc_current_total + stackCurrentArray[i];
     amb_hydrogen_total = amb_hydrogen_total + hydrogenArray[i];
   }
+  Serial.print("Total ");
+  Serial.println(stack_temp_total);
 
   // TODO: potential issue is that we switch states and then the array value are still too low...
   // TODO: could enter alarm state erroneously, may need to allow a few loops between state changes
@@ -118,28 +124,33 @@ void Check_Alarms() {
   fc_current = currentComputation(fc_current_total / 100);
   amb_hydrogen = hydrogenComputation(amb_hydrogen_total / 100);
 
+  Serial.print("Calc: ");
+  Serial.println(stack_temp);
+
+
   //if (amb_hydrogen > HYDROGEN_MAX) //Always checking for hydrogen leaking so checks in every state
   //  fc_alarm = true;
-//  if (fc_current < FC_MIN_CURRENT || fc_current > FC_MAX_CURRENT)
-//    fc_alarm = true;
-//
+  //  if (fc_current < FC_MIN_CURRENT || fc_current > FC_MAX_CURRENT)
+  //    fc_alarm = true;
+  //
   if (FC_State == FC_RUN) {
-//    if (fc_voltage < FC_RUN_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
-//      fc_alarm = true;
-//
-//    if (amb_temp < FC_RUN_MIN_TEMP || amb_temp > FC_MAX_TEMP)
-//      fc_alarm = true;
+    //    if (fc_voltage < FC_RUN_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
+    //      fc_alarm = true;
+    //
+    //    if (amb_temp < FC_RUN_MIN_TEMP || amb_temp > FC_MAX_TEMP)
+    //      fc_alarm = true;
 
-    if (stack_temp < FC_RUN_MIN_TEMP || stack_temp > FC_MAX_TEMP)
-      fc_alarm = true;
+    //    if (stack_temp < FC_RUN_MIN_TEMP || stack_temp > FC_MAX_TEMP)
+    //      fc_alarm = true;
+
   }
   else {
-//    if (fc_voltage < FC_STANDBY_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
-//      fc_alarm = true;
-//
-//    if (amb_temp < FC_MIN_TEMP || amb_temp > FC_MAX_TEMP)
-//      fc_alarm = true;
-//
+    //    if (fc_voltage < FC_STANDBY_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
+    //      fc_alarm = true;
+    //
+    //    if (amb_temp < FC_MIN_TEMP || amb_temp > FC_MAX_TEMP)
+    //      fc_alarm = true;
+    //
     if (stack_temp < FC_MIN_TEMP || stack_temp > FC_MAX_TEMP)
       fc_alarm = true;
   }
@@ -342,31 +353,31 @@ void AutomaticFanControl(int current, int temp_average) {
     case FAN_MAX: //STACK IS HOT
       if (temp_average >= temp_max || temp_average > 73) { //MAX
         fanControl(FAN_MAX);
-        FAN_State = FAN_MAX;
+        return;
       }
       break;
     case FAN_MID_HIGH:
       if (temp_average > temp_opt && temp_average <= temp_max - 2) {//MID_HIGH
         fanControl(FAN_MID_HIGH);
-        FAN_State = FAN_MID_HIGH;
+        return;
       }
       break;
     case FAN_MID:
       if (temp_average >= temp_opt - 2 && temp_average <= temp_opt + 2) { // Perfect temp //MID
         fanControl(FAN_MID);
-        FAN_State = FAN_MID;
+        return;
       }
       break;
     case FAN_MID_LOW:
       if (temp_average <= temp_opt && temp_average <= temp_min + 2) { // Kinda cold.//MID_LOW
         fanControl(FAN_MID_LOW);
-        FAN_State = FAN_MID_LOW;
+        return;
       }
       break;
     case FAN_MIN: //STACK IS COLD
       if (temp_average < temp_min + 2) { // Too cold. //MIN
         fanControl(FAN_MIN);
-        FAN_State = FAN_MIN;
+        return;
       }
       break;
     default:
@@ -377,7 +388,6 @@ void AutomaticFanControl(int current, int temp_average) {
     fanControl(FAN_MAX);
     FAN_State = FAN_MAX;
   }
-
   else if (temp_average > temp_opt && temp_average <= temp_max - 2) {//MID_HIGH
     fanControl(FAN_MID_HIGH);
     FAN_State = FAN_MID_HIGH;
@@ -484,30 +494,38 @@ void setColorState(int red, int yellow, int blue) {
 }
 
 // TODO: are these A B anc C values the same for both sensors????
-int stackTemperatureComputation(int averageValue) {
-  double A_in = averageValue * 5 / 1023; // ??? not sure this is right need more descriptive var names
-  double R1 = (5 * R2_STACK - A_in * R2_STACK) / A_in;
-  double temp = 1/(a_temp+(b_temp*log(R1))+c_temp*log(R1)*log(R1)*log(R1))-273.15;
-  
+int stackTemperatureComputation(double averageValue) {
+    Serial.print("input to func: ");
+  Serial.println(averageValue);
+  float A_in = averageValue * 5 / 1023; // ??? not sure this is right need more descriptive var names
+   Serial.print("Ain in func: ");
+  Serial.println((float)A_in);
+  long R1 = ((5 * R2_STACK) - (A_in * R2_STACK)) / A_in;
+   Serial.print("R1 in func: ");
+  Serial.println(R1);
+  int temp = 1 / (a_temp + (b_temp * log(R1)) + c_temp * log(R1) * log(R1) * log(R1)) - 273.15;
+  Serial.print("Temp in calc func: ");
+  Serial.println((int)temp);
+
   return (int) temp;
 }
 
-int ambTemperatureComputation(int averageValue) {
+int ambTemperatureComputation(double averageValue) {
   double A_in = averageValue * 5 / 1023;
-  double R1 = (5 * R2_AMBIENT - A_in * R2_AMBIENT) / A_in;
-  double temp= 1/(a_temp+(b_temp*log(R1))+c_temp*log(R1)*log(R1)*log(R1))-273.15;//temp = a_temp * R1 * R1 + b_temp * R1 + c_temp;
+  double R1 = ((5 * R2_AMBIENT) - (A_in * R2_AMBIENT)) / A_in;
+  double temp = 1 / (a_temp + (b_temp * log(R1)) + c_temp * log(R1) * log(R1) * log(R1)) - 273.15; //temp = a_temp * R1 * R1 + b_temp * R1 + c_temp;
 
   return (int) temp;
 }
 
-int voltageComputation(int averageValue) {
+int voltageComputation(double averageValue) {
   double V_v_in = averageValue * 5 / 1023;
   double voltage = V_v_in * 28.5 / 1.7; //Accuracy breaks down at 1.4V. Divide 1.7V because reasons...
 
   return (int) voltage;
 }
 
-int currentComputation(int averageValue) {
+int currentComputation(double averageValue) {
   double V_c_in = averageValue * 5 / 1023; // this gets the value in V but not the actual current
   double current = V_c_in * G; // TODO: determine G, this ratio is currently incorrect (100A/50mV) (this does not get actual current)
 
@@ -516,10 +534,8 @@ int currentComputation(int averageValue) {
 }
 
 int hydrogenComputation(int averageValue){
-
  double H_in = averageValue*5/1023; // Determine later.
  double hydrogen = H_in * H_CONST;
-
+ 
  return (int) hydrogen
-
 }

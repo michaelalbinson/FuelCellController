@@ -77,8 +77,8 @@
 #define b_temp 0.000274//-1.0979
 #define c_temp 0.000000127//81.298
 
-#define R2_STACK 10000//Originally 60
-#define R2_AMBIENT 10000 //Originally 60
+long const R2_STACK=10000;//Originally 60
+long const R2_AMBIENT=10000; //Originally 60
 
 //gain value(Current Sens)
 #define G 22.0605 //AnalogIn=9.2745Current+1.2991 ->Max Amps reading at 1023= 110.3A -> 110.3/5=22.06
