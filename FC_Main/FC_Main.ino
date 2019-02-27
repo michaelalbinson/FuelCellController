@@ -6,6 +6,8 @@ boolean fc_alarm = false;
 
 // System-Wide Counters
 unsigned long Current_Time = 0; // would overflow after 25 days if left running forever (hopefully)
+unsigned long Last_Time = 0;
+unsigned long LOOP_TIME = 0;
 
 // Global States
 int FC_State = FC_INITIAL;
@@ -38,6 +40,8 @@ void loop() {
   System();
   FC();
 
-  // keep track of number of loops
-  Current_Time++;
+  // keep track of the time between loops
+  Last_Time = Current_Time;
+  Current_Time = millis();
+  LOOP_TIME = Current_Time - Last_Time;
 }

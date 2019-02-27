@@ -42,7 +42,7 @@
 #define OPEN 0
 #define CLOSED 1
 
-// Alarm Thresholds
+// Sensor Alarm Thresholds
 #define FC_MIN_CURRENT          0   // A
 #define FC_MAX_CURRENT          55  // A
 #define FC_STANDBY_MIN_VOLTAGE  0   // V
@@ -55,11 +55,8 @@
 #define HYDROGEN_MAX            4.5 // ppm
 
 // Constant System Parameters
-#define PURGE_THRESHOLD   1026.0 // A*s
-#define purgeTime         3000   // s
-
-// Delays (number of loops @ 2 ms per loop)
-#define GENERAL_PURGE_TIME 5000 // 0.2 s
+#define PURGE_INERVAL   2300.0 // A*s
+#define PURGE_DURATION  300 // TODO: 300ms 
 
 // Fan Speeds  
 #define FAN_MAX       5
@@ -69,10 +66,10 @@
 #define FAN_MIN       1
 #define FAN_OFF       0
 
-// Program constants (determined via testing) TODO: VERIFY
-#define STARTUP_PURGE_LOOP_COUNT 5000
-#define STANDBY_DELAY_TIME       5000
-#define SHUTDOWN_DELAY_TIME      5000
+// Program constants (determined via testing)
+#define STARTUP_PURGE_TIME 		 200 // ms
+#define STANDBY_DELAY_TIME       3000 // ms
+#define SHUTDOWN_DELAY_TIME      3000 // ms
 
 //gain value(Current Sens)
 #define G 22.0605 // AnalogIn=9.2745 Current+1.2991 -> Max Amps reading at 1023= 110.3A -> 110.3/5=22.06

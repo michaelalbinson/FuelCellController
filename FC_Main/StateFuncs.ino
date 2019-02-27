@@ -6,8 +6,8 @@ boolean fc_fan_time_set = false;
 boolean timer_time_set = false;
 
 // Counters
-int startup_purge_counter = 1; // Counter for how long the purge valve has been open for
-long timer_start_time = 0;     // Counter for how long to stay in FC_STANDBY
+unsigned long startup_purge_counter = 0; // Counter for how long the purge valve has been open for
+unsigned long timer_start_time = 0;     // Counter for how long to stay in FC_STANDBY
 int count = 0;                  // modulo-1000 -- counter for how long to stay in FC_INITIAL
 
 // ----------------- FC STATE FUNCTIONS ----------------- //
@@ -25,7 +25,6 @@ void FCStandby() {
   // The stack is not consuming reactant or delivering power
   // and all stack BOP actuators are in their safe state
   // The system remains in FC_STANDBY for STANDBY_DELAY_TIME
-
   setColorState(0, 0, LED_ON); // BLUE
 
   if (!standby_timer_set) {
@@ -78,7 +77,7 @@ void FCStartup_StartupPurge() {
     fc_fan_time_set = true;
   }
 
-  if (STARTUP_PURGE_LOOP_COUNT <= Current_Time - startup_purge_counter) {
+  if (STARTUP_PURGE_TIME <= Current_Time - startup_purge_counter) {
     fc_fan_time_set = false;
     subStateTransition(FC_SubState, FC_STARTUP_END);
     return;
