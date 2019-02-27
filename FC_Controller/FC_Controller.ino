@@ -461,7 +461,7 @@ int stackTemperatureComputation(double averageValue) {
   float V_in = averageValue * 5 / 1023; // measured signal voltage
   //Serial.print("Ain in func: ");
   //Serial.println((float)A_in);
-  long R1 = ((5 * R2_STACK) - (V_in * R2_STACK)) / V_in;
+  long R1 = ((5 * (unsigned int) R2_STACK) - (V_in * (unsigned int) R2_STACK)) / V_in;
   //Serial.print("R1 in func: ");
   //Serial.println(R1);
   
@@ -479,7 +479,7 @@ int ambTemperatureComputation(double averageValue) {
   double V_in = averageValue * 5 / 1023;
   //Serial.print("Ain in func: ");
   //Serial.println((float)A_in);
-  double R1 = ((5 * R2_AMBIENT) - (V_in * R2_AMBIENT)) / V_in;
+  double R1 = ((5 * (unsigned int) R2_AMBIENT) - (V_in * (unsigned int) R2_AMBIENT)) / V_in;
   //Serial.print("R1 in func: ");
   //Serial.println(R1);
   
