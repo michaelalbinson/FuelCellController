@@ -17,7 +17,7 @@ int stackTemperatureComputation(double averageValue) {
   //Serial.print("Temp in calc func: ");
   //Serial.println((int)temp);
 
-  return (int) temp;
+  return temp;
 }
 
 int ambTemperatureComputation(double averageValue) {
@@ -36,7 +36,7 @@ int ambTemperatureComputation(double averageValue) {
   //Serial.print("Temp in calc func: ");
   //Serial.println((int)temp);
 
-  return (int) temp;
+  return temp;
 }
 
 int voltageComputation(double averageValue) {
