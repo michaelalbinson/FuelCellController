@@ -8,16 +8,13 @@ boolean timer_time_set = false;
 boolean arrays_filled = false;
 
 // Counters
-unsigned long Current_Time = 0; // would overflow after 25 days if left running forever (hopefully)
-long timer_start_time = 0;
-int purge_counter = 1;
-long purgeLastCallTime = 0;
-int arrayIndex = 0;
-
-// Fake Counters
-int fanCount = 0;
-int count = 0;
-int stackTempPos = 0;
+unsigned long Current_Time = 0;       // would overflow after 25 days if left running forever (hopefully)
+long timer_start_time = 0;            // Counter for how long to stay in FC_STANDBY
+int purge_counter = 1;                // how long the purge valve has been open for
+unsigned long purgeLastCallTime = 0;  // last time the purge valve was opened
+int arrayIndex = 0;                   // modulo-100  -- counter for averaging sensor value arrays
+int fanCount = 0;                     // modulo-2000 -- counter for how often to update fan speed
+int count = 0;                        // modulo-1000 -- counter for how long to stay in FC_INITIAL
 
 // Sensor Arrays
 #define ARRAY_SIZE 100
@@ -28,9 +25,9 @@ unsigned short ambientTempArray[ARRAY_SIZE];
 unsigned short hydrogenArray[ARRAY_SIZE];
 
 // States
-int FC_State = FC_INITIAL; // initial state perhaps we could enumerate these
+int FC_State = FC_INITIAL;
 int FC_SubState = FC_STARTUP_STARTUP_PURGE;
-int FAN_State = FAN_MID; //First Fan state assumed is MID
+int FAN_State = FAN_MID;                    // First Fan state assumed is MID at startup
 
 // Averaged values
 double amb_temp;
@@ -58,7 +55,6 @@ void setup() {
 
   delay(100);
   setAllSafe();
-
 }
 
 // ----------------- LOOP -----------------
@@ -73,7 +69,7 @@ void loop() {
 void Check_Alarms() {
   // Check all alarm properties to make sure they're within the safe range
   // If not, set fc_alarm to true.
-  // Temperature, Current, Voltage, Hydrogen are checked
+  // Current, Voltage, Hydrogen and Temperature (Stack and Ambient) are checked
 
   // Take measurements
   ambientTempArray[arrayIndex] = analogRead(AMB_THEMRMISTOR_PIN);
@@ -88,6 +84,7 @@ void Check_Alarms() {
     arrayIndex = 0;
   }
 
+  // if the arrays have not yet been filled keep taking measurements or their averages will be incorrect
   if (!arrays_filled)
     return;
 
@@ -105,14 +102,15 @@ void Check_Alarms() {
     amb_hydrogen_total += hydrogenArray[i];
   }
 
-  // Uses the inputed raw data value to determine the actual values for ambient temp, stack temp, etc.
-  amb_temp = ambTemperatureComputation(amb_temp_total / 100);
-  stack_temp = stackTemperatureComputation(stack_temp_total / 100);
-  fc_voltage = voltageComputation(fc_voltage_total / 100);
-  fc_current = currentComputation(fc_current_total / 100);
-  amb_hydrogen = hydrogenComputation(amb_hydrogen_total / 100);
+  // Uses the average sensor value to determine the actual values for ambient temp, stack temp, etc.
+  amb_temp = ambTemperatureComputation(amb_temp_total / ARRAY_SIZE);
+  stack_temp = stackTemperatureComputation(stack_temp_total / ARRAY_SIZE);
+  fc_voltage = voltageComputation(fc_voltage_total / ARRAY_SIZE);
+  fc_current = currentComputation(fc_current_total / ARRAY_SIZE);
+  amb_hydrogen = hydrogenComputation(amb_hydrogen_total / ARRAY_SIZE);
 
-  //if (amb_hydrogen > HYDROGEN_MAX) //Always checking for hydrogen leaking so checks in every state
+  //Always checking for hydrogen leaking, regardless of state
+  //if (amb_hydrogen > HYDROGEN_MAX)
   //  fc_alarm = true;
   //  if (fc_current < FC_MIN_CURRENT || fc_current > FC_MAX_CURRENT)
   //    fc_alarm = true;
@@ -126,7 +124,6 @@ void Check_Alarms() {
 
     if (stack_temp < FC_RUN_MIN_TEMP || stack_temp > FC_MAX_TEMP)
       fc_alarm = true;
-
   }
   else {
     //    if (fc_voltage < FC_STANDBY_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
@@ -167,7 +164,7 @@ void FC() {
     return;
   }
 
-  // FSM
+  // Finite State Machine Starts Here
   switch (FC_State) {
     case (FC_INITIAL):
       FCInitial();
@@ -177,7 +174,7 @@ void FC() {
       FCStandby();
       break;
 
-    case (FC_STARTUP): // TODO: I changed this but we need to make sure that it is right in terms of the relay states
+    case (FC_STARTUP):
       FCStartup();
       break;
 
@@ -190,10 +187,7 @@ void FC() {
       break;
 
     case (FC_ALARM):
-      // The stack is shut down because an alarm was triggered.
-      // All actuators are in their safe states
-      setAllSafe();
-      setColorState(LED_ON, 0, 0); // Sets state LED to red.
+      FCAlarm();
       break;
 
     default:
@@ -246,6 +240,7 @@ void FCStandby() {
   }
 }
 
+// TODO: I changed this but we need to make sure that it is right in terms of the relay states
 void FCStartup() {
   // The stack goes from FC_STANDBY to a state where current can
   // safely be drawn from the stack
@@ -323,9 +318,15 @@ void FCShutdown() {
   }
 }
 
+void FCAlarm() {
+  // The stack is shut down because an alarm was triggered.
+  // All actuators are in their safe states
+  setAllSafe();
+  setColorState(LED_ON, 0, 0); // Sets state LED to red.
+}
+
 
 // ----------------- STATE TRANSITION & SUBSTATE TRANSITION -----------------
-
 void stateTransition(int fromState, int toState) {
   FC_State = toState;
 }
@@ -334,13 +335,12 @@ void subStateTransition(int fromState, int toState) {
   FC_SubState = toState;
 }
 
-// ----------------- FAN CONTROL -----------------
 
+// ----------------- FAN CONTROL -----------------
 void AutomaticFanControl(int current, int temp_average) {
   int temp_opt = 0.53 * current + 26.01;
   int temp_max = 0.3442 * current + 52.143;
   int temp_min = 0.531 * current + 6.0025;
-
 
   fanCount = fanCount % 2000;
   if (fanCount == 0) {
@@ -396,6 +396,7 @@ void fanRelayControl(boolean relayOneState, boolean relayTwoState, boolean relay
   digitalWrite(RELAY3, relayThreeState);
 }
 
+
 // ----------------- PURGE CONTROL -----------------
 // TODO: use amperage threshhold, this may or may not work
 boolean AutomaticPurgeControl() {
@@ -410,6 +411,7 @@ boolean AutomaticPurgeControl() {
     setPurgeState(OPEN);
   }
 }
+
 
 // ----------------- CHANGE STATES FOR PURGE, SUPPLY, FAN, RELAY, RESISTOR -----------------
 void setPurgeState(int state) {
@@ -434,7 +436,6 @@ void setResistorState(int state) {
 
 void setAllSafe(void) {
   fanControl(FAN_OFF);
-
   setSupplyState(CLOSED);
   setPurgeState(CLOSED);
   setRelayState(OPEN);
@@ -451,7 +452,6 @@ void setColorState(int red, int yellow, int blue) {
 
 
 // ----------------- COMPUTE SENSOR VALUES -----------------
-
 // TODO: are these A B anc C values the same for both sensors???? -- should be
 // TODO: if temp calculation is identical, we only need one function!
 int stackTemperatureComputation(double averageValue) {
