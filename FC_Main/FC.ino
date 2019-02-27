@@ -40,6 +40,5 @@ void FC() {
     default:
       fc_alarm = true; //If we somehow enter an invalid state something is wrong so we should transfer to the FC_Alarm
       break;
-
   }
 }

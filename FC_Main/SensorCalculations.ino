@@ -43,7 +43,7 @@ int voltageComputation(double averageValue) {
   double V_v_in = averageValue * 5 / 1023;
   double voltage = V_v_in * 28.5 / 1.7; //Accuracy breaks down at 1.4V. Divide 1.7V because reasons...
   
-  printData("Voltage", averageValue, (int) voltage);
+//  printData("Voltage", averageValue, (int) voltage);
   return (int) voltage;
 }
 
