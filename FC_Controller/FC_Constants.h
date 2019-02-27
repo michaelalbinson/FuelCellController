@@ -1,5 +1,3 @@
-
-
 // FC States
 #define FC_INITIAL 0
 #define FC_STANDBY 1
@@ -44,21 +42,21 @@
 #define OPEN 0
 #define CLOSED 1
 
-// Alarm Thresholds TODO: set threshes
-#define FC_MIN_CURRENT    0 // A
-#define FC_MAX_CURRENT    55 // A
-#define FC_STANDBY_MIN_VOLTAGE 0 // V
-#define FC_RUN_MIN_VOLTAGE  13 // V
-#define FC_MAX_VOLTAGE    28 // V
-#define FC_MAX_H2_READ     10 // ppm
-#define FC_RUN_MIN_TEMP   0 // deg C 
-#define FC_MIN_TEMP       15 // deg C 
-#define FC_MAX_TEMP       75 // deg C
-#define HYDROGEN_MAX      4.5//
+// Alarm Thresholds
+#define FC_MIN_CURRENT          0   // A
+#define FC_MAX_CURRENT          55  // A
+#define FC_STANDBY_MIN_VOLTAGE  0   // V
+#define FC_RUN_MIN_VOLTAGE      13  // V
+#define FC_MAX_VOLTAGE          28  // V
+#define FC_MAX_H2_READ          10  // ppm
+#define FC_RUN_MIN_TEMP         0   // deg C 
+#define FC_MIN_TEMP             15  // deg C 
+#define FC_MAX_TEMP             75  // deg C
+#define HYDROGEN_MAX            4.5 // ppm
 
 // Constant System Parameters
-#define PURGE_THRESHOLD   1026.0 //A*s
-#define purgeTime         3000
+#define PURGE_THRESHOLD   1026.0 // A*s
+#define purgeTime         3000   // s
 
 // Delays (number of loops @ 2 ms per loop)
 #define GENERAL_PURGE_TIME 5000 // 0.2 s
@@ -71,6 +69,23 @@
 #define FAN_MIN       1
 #define FAN_OFF       0
 
+// Program constants (determined via testing) TODO: VERIFY
+#define STARTUP_PURGE_LOOP_COUNT 5000
+#define STANDBY_DELAY_TIME       5000
+#define SHUTDOWN_DELAY_TIME      5000
+
+//gain value(Current Sens)
+#define G 22.0605 // AnalogIn=9.2745 Current+1.2991 -> Max Amps reading at 1023= 110.3A -> 110.3/5=22.06
+//Hydrogen Const
+#define H_CONST 1 // Data sheet shows a linear relation. Set to one for now
+
+// Thermistor Curve Coefficients For Steinhart-Hart.
+#define A_TEMP 0.000757     // 0.0052
+#define B_TEMP 0.000274     // -1.0979
+#define C_TEMP 0.000000127  // 81.298
+
+#define R2_STACK   10000 //Originally 60
+#define R2_AMBIENT 10000 //Originally 600
 
 // Flags
 boolean fc_on = false;
@@ -79,13 +94,8 @@ boolean fc_fan_time_set = false;
 boolean timer_time_set = false;
 boolean arrays_filled = false;
 
-// Program constants (determined via testing) TODO: VERIFY
-long STARTUP_PURGE_LOOP_COUNT = 5000;
-unsigned long Current_Time = 0; // would overflow after 25 days if left running forever (hopefully)
-long STANDBY_DELAY_TIME = 5000;
-long SHUTDOWN_DELAY_TIME = 5000;
-
 // Counters
+unsigned long Current_Time = 0; // would overflow after 25 days if left running forever (hopefully)
 long timer_start_time = 0;
 int purge_counter = 1;
 long purgeLastCallTime = 0;
@@ -116,16 +126,3 @@ double fc_current;
 double fc_voltage;
 double amb_hydrogen;
 double tempInput;
-
-// ThermistorCurveCoefficientsForSteinhart-Hart.
-#define a_temp 0.000757//0.0052
-#define b_temp 0.000274//-1.0979
-#define c_temp 0.000000127//81.298
-
-long const R2_STACK=10000;//Originally 60
-long const R2_AMBIENT=10000; //Originally 60
-
-//gain value(Current Sens)
-#define G 22.0605 //AnalogIn=9.2745Current+1.2991 ->Max Amps reading at 1023= 110.3A -> 110.3/5=22.06
-//Hydrogen Const
-#define H_CONST 1 //Data sheet shows a linear relation. Set to one for now

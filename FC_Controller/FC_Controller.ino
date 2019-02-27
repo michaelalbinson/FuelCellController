@@ -2,13 +2,13 @@
 
 // ----------------- SETUP -----------------
 void setup() {
-  //Serial.begin(9600);
+  // State LEDs
+  pinMode(STATE_LED_RED, OUTPUT);
+  pinMode(STATE_LED_YELLOW, OUTPUT);
+  pinMode(STATE_LED_BLUE, OUTPUT);
 
-  pinMode(STATE_LED_RED, OUTPUT); // State LED. //Red
-  pinMode(STATE_LED_YELLOW, OUTPUT); //Yellow
-  pinMode(STATE_LED_BLUE, OUTPUT); //Blue
-
-  pinMode(PURGE_PIN, OUTPUT); // Purge, supply, FC relay, FC fan relay, and resistor relay.
+  // Purge, supply, FC relay, FC fan relay, and resistor relay.
+  pinMode(PURGE_PIN, OUTPUT);
   pinMode(SUPPLY_PIN, OUTPUT);
   pinMode(FC_RELAY_PIN, OUTPUT);
   pinMode(RELAY1, OUTPUT);
@@ -17,7 +17,6 @@ void setup() {
   pinMode(RESISTOR_PIN, OUTPUT);
 
   delay(100);
-
   setAllSafe();
 
 }
@@ -59,13 +58,12 @@ void Check_Alarms() {
   unsigned long amb_hydrogen_total = 0;
 
   for (int i = 0; i < ARRAY_SIZE; i++) {
-    amb_temp_total = amb_temp_total + ambientTempArray[i];
-    stack_temp_total = stack_temp_total + stackTempArray[i];
-    fc_voltage_total = fc_voltage_total + stackVoltageArray[i];
-    fc_current_total = fc_current_total + stackCurrentArray[i];
-    amb_hydrogen_total = amb_hydrogen_total + hydrogenArray[i];
+    amb_temp_total += ambientTempArray[i];
+    stack_temp_total += stackTempArray[i];
+    fc_voltage_total += stackVoltageArray[i];
+    fc_current_total += stackCurrentArray[i];
+    amb_hydrogen_total += hydrogenArray[i];
   }
-
 
   // Uses the inputed raw data value to determine the actual values for ambient temp, stack temp, etc.
   amb_temp = ambTemperatureComputation(amb_temp_total / 100);
@@ -73,8 +71,6 @@ void Check_Alarms() {
   fc_voltage = voltageComputation(fc_voltage_total / 100);
   fc_current = currentComputation(fc_current_total / 100);
   amb_hydrogen = hydrogenComputation(amb_hydrogen_total / 100);
-
-
 
   //if (amb_hydrogen > HYDROGEN_MAX) //Always checking for hydrogen leaking so checks in every state
   //  fc_alarm = true;
@@ -106,12 +102,11 @@ void Check_Alarms() {
 }
 
 // ----------------- SYSTEM -----------------
-
 void System() {
   // wait for input to set fc_on to true
-
   if (!fc_on)
     setColorState(LED_ON, 0, LED_ON); //Red and Blue
+
   if (digitalRead(SYSTEM_ON_PIN) == HIGH) {
     fc_on = !fc_on;
     setColorState(LED_ON, LED_ON, LED_ON);
@@ -119,12 +114,9 @@ void System() {
     //TODO: counter or delay? delay may cause a delay in control before switching off which may not be ideal.
     // then again, turning the FC off kills the controller so I suppose it really doesn't matter
   }
-
-
 }
 
 // ----------------- FC -----------------
-
 void FC() {
   if (fc_alarm)
     stateTransition(FC_State, FC_ALARM);
@@ -146,9 +138,6 @@ void FC() {
       break;
 
     case (FC_STARTUP): // TODO: I changed this but we need to make sure that it is right in terms of the relay states
-      // The stack goes from FC_STANDBY to a state where current can
-      // safely be drawn from the stack
-      setColorState(LED_ON, LED_ON, 0); // Sets state LED to red, yellow.
       FCStartup();
       break;
 
@@ -164,9 +153,7 @@ void FC() {
       // The stack is shut down because an alarm was triggered.
       // All actuators are in their safe states
       setAllSafe();
-
       setColorState(LED_ON, 0, 0); // Sets state LED to red.
-
       break;
 
     default:
@@ -183,7 +170,8 @@ void FC() {
 
   Current_Time++;
 }
-// ----------------- FC CASE STATE -----------------
+
+// ----------------- FC STATE FUNCTIONS ----------------- //
 void FCInitial() {
   setColorState(0, LED_ON, 0); // Sets state LED to yellow.
 
@@ -192,30 +180,38 @@ void FCInitial() {
     count = 0;
   }
 }
+
 void FCStandby() {
   // The stack is not consuming reactant or delivering power
   // and all stack BOP actuators are in their safe state
   // The system remains in FC_STANDBY for STANDBY_DELAY_TIME
 
-  setColorState(0, 0, LED_ON); // Sets state LED to blue.
+  setColorState(0, 0, LED_ON); // BLUE
 
   if (!timer_time_set) {
     timer_start_time = Current_Time;
     timer_time_set = true;
   }
+  
   //Default State
-  fanControl(FAN_OFF);//Fan speed
-  setSupplyState(CLOSED);//Supply valve CLOSED
-  setPurgeState(CLOSED);//Purge Valve CLOSED
-  setRelayState(OPEN);//FC Relay OPEN
-  setResistorState(OPEN);//Startup Resistor OPEN
+  fanControl(FAN_OFF);    //Fan speed
+  setSupplyState(CLOSED); //Supply valve CLOSED
+  setPurgeState(CLOSED);  //Purge Valve CLOSED
+  setRelayState(OPEN);    //FC Relay OPEN
+  setResistorState(OPEN); //Startup Resistor OPEN
 
   if (STANDBY_DELAY_TIME <= Current_Time - timer_start_time && fc_on) {
     timer_time_set = false;
     stateTransition(FC_STANDBY, FC_STARTUP);
   }
 }
+
 void FCStartup() {
+  // The stack goes from FC_STANDBY to a state where current can
+  // safely be drawn from the stack
+ 
+  setColorState(LED_ON, LED_ON, 0); // RED, YELLOW
+  
   switch (FC_SubState) {
     case (FC_STARTUP_STARTUP_PURGE):
       // purge valve and supply valves are opened simultaneously
@@ -227,17 +223,13 @@ void FCStartup() {
       setRelayState(OPEN); // Close the state relay.
       setResistorState(CLOSED); // Close the resistor relay as we have reached a stage where we no longer need the start up resistor.
 
-      if (!fc_fan_time_set) { //Timer Reused for PURGE
+      if (!fc_fan_time_set) { // Timer Reused for PURGE
         purge_counter = Current_Time;
         fc_fan_time_set = true;
       }
 
       if (STARTUP_PURGE_LOOP_COUNT <= Current_Time - purge_counter) {
         fc_fan_time_set = false;
-
-        setPurgeState(CLOSED);  //Done in substate STARTUP_END
-        setSupplyState(CLOSED); //Why was this put here?
-
         subStateTransition(FC_SubState, FC_STARTUP_END);
         return;
       }
@@ -259,6 +251,7 @@ void FCStartup() {
       break;
   }
 }
+
 void FCRun() {
   // ?? manual info is copied from FC_STANDBY
   setColorState(0, LED_ON, LED_ON); //BLUE and YELLOW led
@@ -270,6 +263,7 @@ void FCRun() {
   if (!fc_on)
     stateTransition(FC_RUN, FC_SHUTDOWN);
 }
+
 void FCShutdown() {
   // The stack goes from FC_RUN to FC_STANDBY. The system remains in
   // FC_SHUTDOWN for SHUTDOWN_DELAY_TIME
@@ -288,11 +282,6 @@ void FCShutdown() {
     stateTransition(FC_SHUTDOWN, FC_STANDBY);
   }
 }
-
-
-
-
-
 
 
 // ----------------- STATE TRANSITION & SUBSTATE TRANSITION -----------------
@@ -412,26 +401,31 @@ void setAllSafe(void) {
   setResistorState(OPEN);
 }
 
-// ----------------- CONTROL OF LEDs -----------------
 
+// ----------------- LED CONTROL -----------------
 void setColorState(int red, int yellow, int blue) {
   analogWrite(STATE_LED_RED, red);
   analogWrite(STATE_LED_BLUE, blue);
   analogWrite(STATE_LED_YELLOW, yellow);
 }
 
-// TODO: are these A B anc C values the same for both sensors????
+
+// ----------------- COMPUTE SENSOR VALUES -----------------
+
+// TODO: are these A B anc C values the same for both sensors???? -- should be
+// TODO: if temp calculation is identical, we only need one function!
 int stackTemperatureComputation(double averageValue) {
   //Serial.println("Stack Temp");
   //Serial.print("input to func: ");
   //Serial.println(averageValue);
-  float A_in = averageValue * 5 / 1023; // ??? not sure this is right need more descriptive var names
+  float V_in = averageValue * 5 / 1023; // measured signal voltage
   //Serial.print("Ain in func: ");
   //Serial.println((float)A_in);
-  long R1 = ((5 * R2_STACK) - (A_in * R2_STACK)) / A_in;
+  long R1 = ((5 * R2_STACK) - (A_in * R2_STACK)) / V_in;
   //Serial.print("R1 in func: ");
   //Serial.println(R1);
-  int temp = 1 / (a_temp + (b_temp * log(R1)) + c_temp * log(R1) * log(R1) * log(R1)) - 273.15;
+  
+  int temp = 1 / (A_TEMP + (B_TEMP * log(R1)) + C_TEMP * log(R1) * log(R1) * log(R1)) - 273.15;
   //Serial.print("Temp in calc func: ");
   //Serial.println((int)temp);
 
@@ -442,51 +436,50 @@ int ambTemperatureComputation(double averageValue) {
   //Serial.println("Ambient Temp");
   //Serial.print("input to func: ");
   //Serial.println(averageValue);
-  double A_in = averageValue * 5 / 1023;
+  double V_in = averageValue * 5 / 1023;
   //Serial.print("Ain in func: ");
   //Serial.println((float)A_in);
-  double R1 = ((5 * R2_AMBIENT) - (A_in * R2_AMBIENT)) / A_in;
+  double R1 = ((5 * R2_AMBIENT) - (A_in * R2_AMBIENT)) / V_in;
   //Serial.print("R1 in func: ");
   //Serial.println(R1);
-  double temp = 1 / (a_temp + (b_temp * log(R1)) + c_temp * log(R1) * log(R1) * log(R1)) - 273.15; //temp = a_temp * R1 * R1 + b_temp * R1 + c_temp;
+  
+  //temp = a_temp * R1 * R1 + b_temp * R1 + c_temp;
+  double temp = 1 / (a_temp + (b_temp * log(R1)) + c_temp * log(R1) * log(R1) * log(R1)) - 273.15;
   //Serial.print("Temp in calc func: ");
   //Serial.println((int)temp);
-
 
   return (int) temp;
 }
 
 int voltageComputation(double averageValue) {
-  //Serial.println("Voltage");
-  //Serial.print("input to func: ");
-  //Serial.println(averageValue);
   double V_v_in = averageValue * 5 / 1023;
   double voltage = V_v_in * 28.5 / 1.7; //Accuracy breaks down at 1.4V. Divide 1.7V because reasons...
-  //Serial.print("output: ");
-  //Serial.println((int)voltage);
+  
+  printData("Voltage", averageValue, (int) voltage);
   return (int) voltage;
 }
 
+// TODO: UPDATE -- THIS IS NOT HOW THIS WORKS ANYMORE
 int currentComputation(double averageValue) {
-  //Serial.println("Current");
-  //Serial.print("input to func: ");
-  //Serial.println(averageValue);
-  double V_c_in = averageValue * 5 / 1023; // this gets the value in V but not the actual current
+  double V_c_in = averageValue * 5 / 1023; // Measured signal voltage in V
   double current = V_c_in * G; // TODO: determine G, this ratio is currently incorrect (100A/50mV) (this does not get actual current)
-  //Serial.print("output: ");
-  //Serial.println((int)current);
-  return (int) current;
 
+//  printData("Current", averageValue, (int) current);
+  return (int) current;
 }
 
 int hydrogenComputation(double averageValue) {
-  //Serial.println("Hydrogen");
-  //Serial.print("input to func: ");
-  //Serial.println(averageValue);
-  double H_in = averageValue * 5 / 1023; // Determine later.
+  double H_in = averageValue * 5 / 1023; // Measured signal voltage in V
   double hydrogen = H_in * H_CONST;
-  //Serial.print("output: ");
-  //Serial.println((int)hydrogen);
+  
+//  printData("Hydrogen", averageValue, (int) hydrogen);
   return (int) hydrogen;
+}
 
+void printData(char* str, int averageValue, int output) {
+  Serial.println("Hydrogen");
+  Serial.print("input to func: ");
+  Serial.println(averageValue);
+  Serial.print("output: ");
+  Serial.println(output);
 }
