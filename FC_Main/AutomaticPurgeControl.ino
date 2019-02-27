@@ -1,22 +1,32 @@
-unsigned long purgeLastCallTime = 0;  // last time the purge valve was opened
+#define RESET_TIME 3000 // ms (3s)
+
+unsigned long purgeLastCallTime = 0;  // AKA LastCallTime
 double AmpSecSincePurge = 0;
 long PurgeOpenCounter = 0;
 
 boolean purgeIsOpen = false;
 
 // ----------------- PURGE CONTROL -----------------
-// TODO: use amperage threshhold, this may or may not work
-// TODO: purge interval should be used, not a constant time i.e. GENERAL_PURGE_TIME
 void AutomaticPurgeControl() {
-  // If Purge Valve is open, reset the counter. If the Purge Valve is closed, add AmpSec
+  // If function hasn’t been called in RESET_TIME, Reset Local Static Variables
+  // This happens if we transition into this state a while after starting
+  // or leave the run state and then re-enter it later.
+  if (CurrentTime – purgeLastCallTime >= RESET_TIME) {
+  	AmpSecSincePurge = 0;
+	PurgeOpenCounter = 0;
+  }
+  purgeLastCallTime = CurrentTime
+
+  // If Purge Valve is open, reset the counter. 
+  // If the Purge Valve is closed, add A*s to the AmpSecSincePurge counter.
   if (purgeIsOpen) {
   	AmpSecSincePurge = 0;
   } else {
   	AmpSecSincePurge += fc_current * LOOP_TIME;
   }
 
-  // If PURGE_INTERVAL is exceeded, open the Purge Valve and set the counter for the number of loops
-  // to keep it open for.
+  // If PURGE_INTERVAL is exceeded, open the Purge Valve and set the counter 
+  // to keep it open for the number of loops
   if (AmpSecSincePurge > PURGE_INTERVAL) {
   	setPurgeState(OPEN);
   	purgeIsOpen = true;
