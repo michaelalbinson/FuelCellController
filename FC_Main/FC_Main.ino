@@ -10,7 +10,7 @@ unsigned long Last_Time = 0;
 unsigned long LOOP_TIME = 0;
 
 // Global States
-int FC_State = FC_INITIAL;
+int FC_State = FC_STANDBY;
 int FC_SubState = FC_STARTUP_STARTUP_PURGE;
 int FAN_State = FAN_MID;                    // First Fan state assumed is MID at startup
 

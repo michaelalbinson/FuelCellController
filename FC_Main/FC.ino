@@ -5,12 +5,6 @@ void FC() {
   if (fc_alarm)
     stateTransition(FC_State, FC_ALARM);
 
-  if (!fc_on) {
-    setAllSafe();
-    FC_State = FC_INITIAL;
-    return;
-  }
-
   // Finite State Machine Starts Here
   switch (FC_State) {
     case (FC_INITIAL):

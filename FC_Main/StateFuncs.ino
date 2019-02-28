@@ -34,10 +34,7 @@ void FCStandby() {
   
   //Default State
   fanControl(FAN_OFF);    //Fan speed
-  setSupplyState(CLOSED); //Supply valve CLOSED
-  setPurgeState(CLOSED);  //Purge Valve CLOSED
-  setRelayState(OPEN);    //FC Relay OPEN
-  setResistorState(OPEN); //Startup Resistor OPEN
+  setAllSafe();
 
   if (STANDBY_DELAY_TIME <= Current_Time - timer_start_time && fc_on) {
     standby_timer_set = false;
