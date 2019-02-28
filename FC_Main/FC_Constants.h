@@ -45,9 +45,9 @@
 // Sensor Alarm Thresholds
 #define FC_MIN_CURRENT          0   // A
 #define FC_MAX_CURRENT          55  // A
-#define FC_STANDBY_MIN_VOLTAGE  0   // V
+
 #define FC_RUN_MIN_VOLTAGE      13  // V
-#define FC_MAX_VOLTAGE          28  // V
+#define FC_MAX_VOLTAGE          29  // V
 #define FC_MAX_H2_READ          10  // ppm
 #define FC_RUN_MIN_TEMP         0   // deg C 
 #define FC_MIN_TEMP             15  // deg C 
@@ -81,5 +81,4 @@
 #define B_TEMP 0.000274     // -1.0979
 #define C_TEMP 0.000000127  // 81.298
 
-#define R2_STACK   10000 //Originally 60
-#define R2_AMBIENT 10000 //Originally 600
+#define R2   10000 //Originally 60

@@ -58,8 +58,8 @@ void Check_Alarms() {
   }
 
   // Uses the average sensor value to determine the actual values for ambient temp, stack temp, etc.
-  amb_temp     = ambTemperatureComputation(amb_temp_total / ARRAY_SIZE);
-  stack_temp   = stackTemperatureComputation(stack_temp_total / ARRAY_SIZE);
+  amb_temp     = TemperatureComputation(amb_temp_total / ARRAY_SIZE);
+  stack_temp   = TemperatureComputation(stack_temp_total / ARRAY_SIZE);
   fc_voltage   = voltageComputation(fc_voltage_total / ARRAY_SIZE);
   fc_current   = currentComputation(fc_current_total / ARRAY_SIZE);
   amb_hydrogen = hydrogenComputation(amb_hydrogen_total / ARRAY_SIZE);
