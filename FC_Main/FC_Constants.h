@@ -44,7 +44,7 @@
 
 // Sensor Alarm Thresholds
 #define FC_MIN_CURRENT          0   // A
-#define FC_MAX_CURRENT          55  // A
+#define FC_MAX_CURRENT          75  // A
 
 #define FC_RUN_MIN_VOLTAGE      13  // V
 #define FC_MAX_VOLTAGE          29  // V

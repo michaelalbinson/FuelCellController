@@ -26,7 +26,7 @@ void FC() {
       break;
 
     case (FC_RUN):
-      FCStartup();
+      FCRun();
       break;
 
     case (FC_SHUTDOWN):

@@ -66,12 +66,13 @@ void FCStartup_StartupPurge() {
   // purge valve and supply valves are opened simultaneously
   // for the start-up purge and the start-up resistor is applied
   // across the stack to limit voltage
-
+ 
+  
   setSupplyState(OPEN);
   setPurgeState(OPEN);
   setRelayState(OPEN); // Open the state relay.
   setResistorState(CLOSED); // Close the resistor relay as we have reached a stage where we no longer need the start up resistor.
-
+  
   if (!fc_fan_time_set) { // Timer Reused for PURGE
     startup_purge_counter = Current_Time;
     fc_fan_time_set = true;
