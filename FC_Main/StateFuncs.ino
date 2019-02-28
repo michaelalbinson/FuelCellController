@@ -69,7 +69,7 @@ void FCStartup_StartupPurge() {
 
   setSupplyState(OPEN);
   setPurgeState(OPEN);
-  setRelayState(OPEN); // Close the state relay.
+  setRelayState(OPEN); // Open the state relay.
   setResistorState(CLOSED); // Close the resistor relay as we have reached a stage where we no longer need the start up resistor.
 
   if (!fc_fan_time_set) { // Timer Reused for PURGE
@@ -94,7 +94,7 @@ void FCStartup_StartupEnd() {
   subStateTransition(FC_SubState, FC_STARTUP_STARTUP_PURGE); // switch back to startup purge
 
   setResistorState(OPEN); // Open the resistor relay as we have reached a stage where we no longer need the start up resistor.
-  setRelayState(OPEN); // Close the system relay, start the damn thing.
+  setRelayState(CLOSED); // Close the system relay, start the damn thing.
 
   fanControl(FAN_MID_LOW);
 }
