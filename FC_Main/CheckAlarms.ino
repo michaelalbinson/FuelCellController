@@ -4,14 +4,6 @@ int arrayIndex = 0; // modulo-100  -- counter for averaging sensor value arrays
 // Flags
 boolean arrays_filled = false;
 
-// Sensor Arrays
-#define ARRAY_SIZE 100
-unsigned short stackTempArray[ARRAY_SIZE];
-unsigned short stackCurrentArray[ARRAY_SIZE];
-unsigned short stackVoltageArray[ARRAY_SIZE];
-unsigned short ambientTempArray[ARRAY_SIZE];
-unsigned short hydrogenArray[ARRAY_SIZE];
-
 // Averaged values
 double amb_temp;
 double stack_temp;
@@ -19,6 +11,14 @@ double fc_current;
 double fc_voltage;
 double amb_hydrogen;
 double tempInput;
+
+// Sensor Arrays
+#define ARRAY_SIZE 100
+unsigned short stackTempArray[ARRAY_SIZE];
+unsigned short stackCurrentArray[ARRAY_SIZE];
+unsigned short stackVoltageArray[ARRAY_SIZE];
+unsigned short ambientTempArray[ARRAY_SIZE];
+unsigned short hydrogenArray[ARRAY_SIZE];
 
 // ----------------- CHECK ALARMS -----------------
 void Check_Alarms() {
