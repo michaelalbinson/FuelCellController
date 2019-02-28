@@ -11,11 +11,11 @@ void AutomaticPurgeControl() {
   // If function hasn’t been called in RESET_TIME, Reset Local Static Variables
   // This happens if we transition into this state a while after starting
   // or leave the run state and then re-enter it later.
-  if (CurrentTime – purgeLastCallTime >= RESET_TIME) {
+  if (Current_Time - purgeLastCallTime >= RESET_TIME) {
   	AmpSecSincePurge = 0;
 	PurgeOpenCounter = 0;
   }
-  purgeLastCallTime = CurrentTime
+  purgeLastCallTime = Current_Time;
 
   // If Purge Valve is open, reset the counter. 
   // If the Purge Valve is closed, add A*s to the AmpSecSincePurge counter.

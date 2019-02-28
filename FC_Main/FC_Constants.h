@@ -55,7 +55,7 @@
 #define HYDROGEN_MAX            4.5 // ppm
 
 // Constant System Parameters
-#define PURGE_INERVAL   2300.0 // A*s
+#define PURGE_INTERVAL   2300.0 // A*s
 #define PURGE_DURATION  300 // TODO: 300ms 
 
 // Fan Speeds  
