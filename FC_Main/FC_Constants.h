@@ -25,7 +25,7 @@
 #define SUPPLY_PIN 6
 #define FC_RELAY_PIN 7
 #define RESISTOR_PIN 8
-//FAN RELAY BANK(Relay3 is strongest,)
+//FAN RELAY BANK(Relay3 is strongest, )
 #define RELAY1 11  
 #define RELAY2 10
 #define RELAY3 9

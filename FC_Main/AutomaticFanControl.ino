@@ -6,7 +6,7 @@ void AutomaticFanControl(int current, int temp_average) {
   int temp_max = 0.3442 * current + 52.143;
   int temp_min = 0.531 * current + 6.0025;
 
-  fanCount = fanCount % 2000;
+  fanCount = fanCount % 1000;
   if (fanCount == 0) {
     if (temp_average >= temp_max || temp_average > 73) { //MAX
       fanControl(FAN_MAX);
