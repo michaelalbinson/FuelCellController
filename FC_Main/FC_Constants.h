@@ -25,10 +25,10 @@
 #define SUPPLY_PIN 6
 #define FC_RELAY_PIN 7
 #define RESISTOR_PIN 8
-//FAN RELAY BANK(Added)
-#define RELAY1 9  
+//FAN RELAY BANK(Relay3 is strongest,)
+#define RELAY1 11  
 #define RELAY2 10
-#define RELAY3 11
+#define RELAY3 9
 //ON BTN
 #define SYSTEM_ON_PIN 12
 //LED READOUT Changed
@@ -47,7 +47,7 @@
 #define FC_MAX_CURRENT          75  // A
 
 #define FC_RUN_MIN_VOLTAGE      13  // V
-#define FC_MAX_VOLTAGE          29  // V
+#define FC_MAX_VOLTAGE          28  // V
 #define FC_MAX_H2_READ          10  // ppm
 #define FC_RUN_MIN_TEMP         0   // deg C 
 #define FC_MIN_TEMP             15  // deg C 
@@ -74,7 +74,7 @@
 //gain value(Current Sens)
 #define G 22.0605 // AnalogIn=9.2745 Current+1.2991 -> Max Amps reading at 1023= 110.3A -> 110.3/5=22.06
 //Hydrogen Const
-#define H_CONST 1 // Data sheet shows a linear relation. Set to one for now
+#define H_CONST 1.5 // Data sheet shows a linear relation. Set to one for now
 
 // Thermistor Curve Coefficients For Steinhart-Hart.
 #define A_TEMP 0.000757     // 0.0052

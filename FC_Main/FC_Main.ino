@@ -5,12 +5,12 @@ boolean fc_on = false;
 boolean fc_alarm = false;
 
 // System-Wide Counters
-unsigned long Current_Time = 0; // would overflow after 25 days if left running forever (hopefully)
+unsigned long Current_Time = 1; // would overflow after 25 days if left running forever (hopefully)
 unsigned long Last_Time = 0;
 unsigned long LOOP_TIME = 0;
 
 // Global States
-int FC_State = FC_STANDBY;
+int FC_State = FC_INITIAL;
 int FC_SubState = FC_STARTUP_STARTUP_PURGE;
 int FAN_State = FAN_MID;                    // First Fan state assumed is MID at startup
 

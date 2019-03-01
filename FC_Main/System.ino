@@ -1,9 +1,6 @@
 // ----------------- SYSTEM -----------------
 void System() {
   // wait for input to set fc_on to true
-  if (!fc_on)
-    
-
   if (digitalRead(SYSTEM_ON_PIN) == HIGH) {
     fc_on = !fc_on;
      setColorState(LED_ON, 0, LED_ON); //Red and Blue

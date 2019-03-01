@@ -14,11 +14,8 @@ int count = 0;                  // modulo-1000 -- counter for how long to stay i
 void FCInitial() {
   setColorState(0, LED_ON, 0); // Sets state LED to yellow.
 
-  if (count >= 1000) // A timer to determine how long to be in this state.
+  if (Current_Time > 5000) // A timer to determine how long to be in this state.
     stateTransition(FC_INITIAL, FC_STANDBY);
-
-  count = count % 1001; // count up to 1000
-  count++;
 }
 
 void FCStandby() {
