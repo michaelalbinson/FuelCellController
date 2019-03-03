@@ -2,14 +2,16 @@
 
 // TODO: are these A B anc C values the same for both sensors???? -- should be
 // TODO: if temp calculation is identical, we only need one function!
-int TemperatureComputation(double averageValue) {
+int TemperatureComputation(double averageValue) { 
   //Serial.println("Stack Temp");
   //Serial.print("input to func: ");
   //Serial.println(averageValue);
   float V_in = averageValue * 5 / 1023; // measured signal voltage
   //Serial.print("Ain in func: ");
   //Serial.println((float)A_in);
-  long R1 = ((5 * (unsigned int) R2) - (V_in * (unsigned int) R2)) / V_in;
+  long R1 = (V_in*(unsigned int)R2)/(6-V_in);
+  
+  //  long R1 = ((6 * (unsigned int) R2) - (V_in * (unsigned int) R2)) / 6;
   //Serial.print("R1 in func: ");
   //Serial.println(R1);
   

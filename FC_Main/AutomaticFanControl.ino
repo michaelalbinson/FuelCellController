@@ -8,24 +8,18 @@ void AutomaticFanControl(int current, int temp_average) {
 
   fanCount = fanCount % 1000;
   if (fanCount == 0) {
-    if (temp_average >= temp_max || temp_average > 73) { //MAX
+    if (temp_average >= temp_opt - 874 && temp_average <= temp_opt + 4 ) { // Perfect temp //MID
+      fanControl(FAN_MID);
+    } else if (temp_average >= temp_max || temp_average > 73) { //MAX
       fanControl(FAN_MAX);
-      FAN_State = FAN_MAX;
     } else if (temp_average > temp_opt && temp_average <= temp_max - 2) {//MID_HIGH
       fanControl(FAN_MID_HIGH);
-      FAN_State = FAN_MID_HIGH;
-    } else if (temp_average >= temp_opt - 2 && temp_average <= temp_opt + 2) { // Perfect temp //MID
-      fanControl(FAN_MID);
-      FAN_State = FAN_MID;
-    } else if (temp_average <= temp_opt && temp_average <= temp_min + 2) { // Kinda cold.//MID_LOW
+    } else if (temp_average <= temp_opt && temp_average >= temp_min + 2) { // Kinda cold.//MID_LOW
       fanControl(FAN_MID_LOW);
-      FAN_State = FAN_MID_LOW;
     } else if (temp_average < temp_min + 2) { // Too cold. //MIN
       fanControl(FAN_MIN);
-      FAN_State = FAN_MIN;
     } else {
       fanControl(FAN_MAX);//If something is wrong and we get through all the cases FAN to MAX
-      FAN_State = FAN_MAX;
     }
   }
   fanCount++;
@@ -34,22 +28,22 @@ void AutomaticFanControl(int current, int temp_average) {
 void fanControl(int FAN_SPEED) {
   switch (FAN_SPEED) {
     case FAN_MAX: //STACK IS HOT
-      fanRelayControl(LOW, LOW, HIGH);
+      fanRelayControl(HIGH , HIGH, HIGH); //12.?
       break;
     case FAN_MID_HIGH:
-      fanRelayControl(LOW, HIGH, LOW);
+      fanRelayControl(LOW, LOW, HIGH); //10.3
       break;
     case FAN_MID:
-      fanRelayControl(LOW, HIGH, HIGH);
+       fanRelayControl(HIGH, HIGH, LOW); //3.7
       break;
     case FAN_MID_LOW:
-      fanRelayControl(HIGH, LOW, LOW);
+      fanRelayControl(LOW, HIGH, LOW); //2.7
       break;
     case FAN_MIN: //STACK IS COLD
-      fanRelayControl(HIGH, HIGH, LOW);
+      fanRelayControl(LOW, HIGH, LOW); //2.7
       break;
     case FAN_OFF:
-      fanRelayControl(LOW,  LOW,  LOW);
+      fanRelayControl(LOW,  LOW,  LOW); //0
       break;
   }
 }

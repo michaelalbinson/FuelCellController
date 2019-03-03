@@ -65,26 +65,25 @@ void Check_Alarms() {
   amb_hydrogen = hydrogenComputation(amb_hydrogen_total / ARRAY_SIZE);
 
   //Always checking for hydrogen leaking, regardless of state
-//  if (amb_hydrogen > HYDROGEN_MAX)
-//    fc_alarm = true;
-//    if (fc_current < FC_MIN_CURRENT || fc_current > FC_MAX_CURRENT)
-//      fc_alarm = true;
+  //  if (amb_hydrogen > HYDROGEN_MAX)
+  //    fc_alarm = true;
+  if (fc_current < FC_MIN_CURRENT || fc_current > FC_MAX_CURRENT)
+    fc_alarm = true;
   //
   if (FC_State == FC_RUN) {
-//        if (fc_voltage < FC_RUN_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
-//          fc_alarm = true;
-//    
-//        if (amb_temp < FC_RUN_MIN_TEMP || amb_temp > FC_MAX_TEMP)
-//          fc_alarm = true;
+//    if (fc_voltage < FC_RUN_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
+//      fc_alarm = true;
+    if (amb_temp < FC_RUN_MIN_TEMP || amb_temp > FC_MAX_TEMP)
+      fc_alarm = true;
 
     if (stack_temp < FC_RUN_MIN_TEMP || stack_temp > FC_MAX_TEMP)
       fc_alarm = true;
   }
   else {
-//        if (amb_temp < FC_MIN_TEMP || amb_temp > FC_MAX_TEMP)
-//          fc_alarm = true;
-//    //
-//    if (stack_temp < FC_MIN_TEMP || stack_temp > FC_MAX_TEMP)
-//      fc_alarm = true;
+    if (amb_temp < FC_MIN_TEMP || amb_temp > FC_MAX_TEMP)
+      fc_alarm = true;
+    //
+    if (stack_temp < FC_MIN_TEMP || stack_temp > FC_MAX_TEMP)
+      fc_alarm = true;
   }
 }

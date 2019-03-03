@@ -109,7 +109,7 @@ void FCRun() {
 void FCShutdown() {
   // The stack goes from FC_RUN to FC_STANDBY. The system remains in
   // FC_SHUTDOWN for SHUTDOWN_DELAY_TIME
-
+  fanControl(FAN_MID_HIGH);
   setColorState(LED_ON, LED_ON, LED_ON); // RED BLUE YELLOW on
 
   if (!timer_time_set) {
@@ -119,7 +119,8 @@ void FCShutdown() {
 
   setAllSafe();
 
-  if (SHUTDOWN_DELAY_TIME <= Current_Time - timer_start_time) {
+//3 minutes or 20 or ambient
+  if ((SHUTDOWN_DELAY_TIME <= Current_Time - timer_start_time)|| stack_temp <= amb_temp || stack_temp <= 20) {
     timer_time_set = false;
     stateTransition(FC_SHUTDOWN, FC_STANDBY);
   }

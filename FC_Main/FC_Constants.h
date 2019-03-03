@@ -69,7 +69,7 @@
 // Program constants (determined via testing)
 #define STARTUP_PURGE_TIME 		 200 // ms
 #define STANDBY_DELAY_TIME       3000 // ms
-#define SHUTDOWN_DELAY_TIME      3000 // ms
+#define SHUTDOWN_DELAY_TIME      180000 // ms //3 minutes 3*60*1000
 
 //gain value(Current Sens)
 #define G 22.0605 // AnalogIn=9.2745 Current+1.2991 -> Max Amps reading at 1023= 110.3A -> 110.3/5=22.06
