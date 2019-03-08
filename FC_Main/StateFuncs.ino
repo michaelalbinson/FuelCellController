@@ -1,5 +1,3 @@
-// Function Declarations of what should occur during each FC_State and FC_Startup_Substate
-
 // Flags
 boolean standby_timer_set = false;
 boolean fc_fan_time_set = false;
@@ -19,8 +17,7 @@ void FCInitial() {
 }
 
 void FCStandby() {
-  // The stack is not consuming reactant or delivering power
-  // and all stack BOP actuators are in their safe state
+  // The stack is not consuming reactant or delivering power and all stack BOP actuators are in their safe state
   // The system remains in FC_STANDBY for STANDBY_DELAY_TIME
   setColorState(0, 0, LED_ON); // BLUE
 
@@ -39,7 +36,6 @@ void FCStandby() {
   }
 }
 
-// TODO: I changed this but we need to make sure that it is right in terms of the relay states
 void FCStartup() {
   // The stack goes from FC_STANDBY to a state where current can
   // safely be drawn from the stack
@@ -57,14 +53,12 @@ void FCStartup() {
 }
 
 void FCStartup_StartupPurge() {
-  // purge valve and supply valves are opened simultaneously
-  // for the start-up purge and the start-up resistor is applied
-  // across the stack to limit voltage
- 
   
-  setSupplyState(OPEN);
+  // for the start-up purge and the start-up resistor is applied**Resistor Control is nonexistant in test_bench**
+  // across the stack to limit voltage
+  setSupplyState(OPEN);// purge valve and supply valves are opened simultaneously
   setPurgeState(OPEN);
-  setRelayState(CLOSED); // Open the state relay.
+  setRelayState(CLOSED); // Open the state relay. 
   //setResistorState(CLOSED); // Close the resistor relay as we have reached a stage where we no longer need the start up resistor.
  
   
@@ -96,7 +90,6 @@ void FCStartup_StartupEnd() {
 }
 
 void FCRun() {
-  // ?? manual info is copied from FC_STANDBY
   setColorState(0, LED_ON, LED_ON); //BLUE and YELLOW led
   setSupplyState(OPEN); // The supply value should always be open.
   setRelayState(CLOSED);

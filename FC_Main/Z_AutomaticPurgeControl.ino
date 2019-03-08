@@ -1,5 +1,4 @@
 // Z_ in file name due to an error with global variables due to the order of files compiled
-
 #define RESET_TIME 3000 // ms (3s)
 
 unsigned long purgeLastCallTime = 0;  // AKA LastCallTime
