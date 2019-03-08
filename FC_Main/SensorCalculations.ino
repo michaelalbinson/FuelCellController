@@ -2,8 +2,9 @@
 int TemperatureComputation(double averageValue) { 
 
   float V_in = averageValue * 5 / 1023; // measured signal voltage
-  long R1 = (V_in*(unsigned int)R2)/(6-V_in);  
-  //  long R1 = ((6 * (unsigned int) R2) - (V_in * (unsigned int) R2)) / 6; //
+  long R1 = (V_in*(unsigned int)R2)/(THERM_V_IN-V_in);  //THERMISTOR in R2 position
+  //  long R1 = ((THERM_V_IN * (unsigned int) R2) - (V_in * (unsigned int) R2)) / THERM_V_IN; 
+  // if THERMISTOR in R1 position use ^ CHANGE VARIABLE FOR R1= around to R2= and change FC_Constants
   int temp = 1 / (A_TEMP + (B_TEMP * log(R1)) + C_TEMP * log(R1) * log(R1) * log(R1)) - 273.15;
 
   return temp;
