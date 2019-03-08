@@ -29,4 +29,4 @@ int hydrogenComputation(double averageValue) {
   double hydrogen = H_in * H_CONST;
   
   return (int) hydrogen;
-}[  
+}
