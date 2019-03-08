@@ -28,7 +28,7 @@ void FCStandby() {
     timer_start_time = Current_Time;
     standby_timer_set = true;
   }
-  
+
   //Default State
   fanControl(FAN_OFF);    //Fan speed
   setAllSafe();
@@ -44,7 +44,7 @@ void FCStartup() {
   // The stack goes from FC_STANDBY to a state where current can
   // safely be drawn from the stack
   setColorState(LED_ON, LED_ON, 0); // RED, YELLOW
-  
+
   switch (FC_SubState) {
     case (FC_STARTUP_STARTUP_PURGE):
       FCStartup_StartupPurge();
@@ -60,13 +60,13 @@ void FCStartup_StartupPurge() {
   // purge valve and supply valves are opened simultaneously
   // for the start-up purge and the start-up resistor is applied
   // across the stack to limit voltage
- 
-  
+
+
   setSupplyState(OPEN);
   setPurgeState(OPEN);
   setRelayState(OPEN); // Open the state relay.
   setResistorState(CLOSED); // Close the resistor relay as we have reached a stage where we no longer need the start up resistor.
-  
+
   if (!fc_fan_time_set) { // Timer Reused for PURGE
     startup_purge_counter = Current_Time;
     fc_fan_time_set = true;
@@ -117,10 +117,16 @@ void FCShutdown() {
     timer_time_set = true;
   }
 
-  setAllSafe();
+  //Set all Safe includes FAN_OFF this will which turns the fan off. We need it on here hence the new function
+  //setAllSafeButFan
+  setSupplyState(CLOSED);
+  setPurgeState(CLOSED);
+  setRelayState(OPEN);
+  setResistorState(OPEN);
 
-//3 minutes or 20 or ambient
-  if ((SHUTDOWN_DELAY_TIME <= Current_Time - timer_start_time)|| stack_temp <= amb_temp || stack_temp <= 20) {
+  //3 minutes or 20 or ambient
+  if ((SHUTDOWN_DELAY_TIME <= Current_Time - timer_start_time) || stack_temp <= amb_temp || stack_temp <= 20) {
+    fanControl(FAN_OFF);
     timer_time_set = false;
     stateTransition(FC_SHUTDOWN, FC_STANDBY);
   }

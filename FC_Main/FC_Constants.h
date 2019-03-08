@@ -80,5 +80,5 @@
 #define A_TEMP 0.000757     // 0.0052
 #define B_TEMP 0.000274     // -1.0979
 #define C_TEMP 0.000000127  // 81.298
-
+#define THERM_V_IN 5.1
 #define R2   10000 //Originally 60
