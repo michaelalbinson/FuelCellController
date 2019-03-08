@@ -9,7 +9,7 @@ int TemperatureComputation(double averageValue) {
   //  long R1 = ((6 * (unsigned int) R2) - (V_in * (unsigned int) R2)) / 6;
   //Serial.print("R1 in func: ");
   //Serial.println(R1);
-  
+
   int temp = 1 / (A_TEMP + (B_TEMP * log(R1)) + C_TEMP * log(R1) * log(R1) * log(R1)) - 273.15;
   //Serial.print("Temp in calc func: ");
   //Serial.println((int)temp);
@@ -19,7 +19,7 @@ int TemperatureComputation(double averageValue) {
 
 int voltageComputation(double averageValue) {
   double V_v_in = averageValue * 5 / 1023;
-  double voltage = V_v_in * 26 / 1.7; //Accuracy breaks down at 1.4V. Divide 1.7V because reasons...
+  double voltage = V_v_in * 26 / 0.62; //Accuracy breaks down at 1.4V. Divide 1.7V because reasons...
   
 //  printData("Voltage", averageValue, (int) voltage);
   return (int) voltage;

@@ -117,11 +117,17 @@ void FCShutdown() {
     timer_start_time = Current_Time;
     timer_time_set = true;
   }
-
-  setAllSafe();
+  
+  //Set all Safe includes FAN_OFF this will which turns the fan off. We need it on here hence the new function
+  //setAllSafeButFan
+  setSupplyState(CLOSED);
+  setPurgeState(CLOSED);
+  setRelayState(OPEN);
+  setResistorState(OPEN);
 
 //3 minutes or 20 or ambient
   if ((SHUTDOWN_DELAY_TIME <= Current_Time - timer_start_time)|| stack_temp <= amb_temp || stack_temp <= 20) {
+    fanControl(FAN_OFF);
     timer_time_set = false;
     stateTransition(FC_SHUTDOWN, FC_STANDBY);
   }

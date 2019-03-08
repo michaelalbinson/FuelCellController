@@ -71,8 +71,8 @@ void Check_Alarms() {
     fc_alarm = true;
   //
   if (FC_State == FC_RUN) {
-//    if (fc_voltage < FC_RUN_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
-//      fc_alarm = true;
+    if (fc_voltage < FC_RUN_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE ) //
+      fc_alarm = true;
     if (amb_temp < FC_RUN_MIN_TEMP || amb_temp > FC_MAX_TEMP)
       fc_alarm = true;
 
@@ -82,7 +82,7 @@ void Check_Alarms() {
   else {
     if (amb_temp < FC_MIN_TEMP || amb_temp > FC_MAX_TEMP)
       fc_alarm = true;
-    //
+    
     if (stack_temp < FC_MIN_TEMP || stack_temp > FC_MAX_TEMP)
       fc_alarm = true;
   }
