@@ -46,13 +46,13 @@
 #define FC_MIN_CURRENT          0   // A
 #define FC_MAX_CURRENT          75  // A
 
-#define FC_RUN_MIN_VOLTAGE      13  // V
+#define FC_RUN_MIN_VOLTAGE      6.9  // V
 #define FC_MAX_VOLTAGE          28  // V
 #define FC_MAX_H2_READ          10  // ppm
 #define FC_RUN_MIN_TEMP         0   // deg C 
 #define FC_MIN_TEMP             15  // deg C 
 #define FC_MAX_TEMP             75  // deg C
-#define HYDROGEN_MAX            4.5 // ppm
+#define HYDROGEN_IN            2 // V
 
 // Constant System Parameters
 #define PURGE_INTERVAL   2300.0 // A*s
@@ -74,11 +74,16 @@
 //gain value(Current Sens)
 #define G 22.0605 // AnalogIn=9.2745 Current+1.2991 -> Max Amps reading at 1023= 110.3A -> 110.3/5=22.06
 //Hydrogen Const
-#define H_CONST 1.5 // Data sheet shows a linear relation. Set to one for now
-
-// Thermistor Curve Coefficients For Steinhart-Hart.
-#define A_TEMP 0.000757     // 0.0052
-#define B_TEMP 0.000274     // -1.0979
-#define C_TEMP 0.000000127  // 81.298
+#define H_CONST 1
+// Data sheet shows a linear relation. Set to one for now
 #define THERM_V_IN 5.1
-#define R2   10000 //Originally 60
+#define A_R2   10000 //Originally 60
+#define S_R2   22000   
+//Amb Thermistor Curve Coefficients For Steinhart-Hart.
+#define A_A_TEMP 0.000757     // 0.0052
+#define B_A_TEMP 0.000274     // -1.0979
+#define C_A_TEMP 0.000000127  // 81.298
+//Stk Thermistor Curve Coefficients For Steinhart-Hart.
+#define A_S_TEMP 0.001795574   
+#define B_S_TEMP 0.00004028345
+#define C_S_TEMP 0.0000007270291

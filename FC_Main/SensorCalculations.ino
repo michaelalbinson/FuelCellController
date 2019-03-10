@@ -1,11 +1,21 @@
 // ----------------- COMPUTE SENSOR VALUES -----------------
-int TemperatureComputation(double averageValue) { 
+int stackTemperatureComputation(double averageValue) { 
 
   float V_in = averageValue * 5 / 1023; // measured signal voltage
-  long R1 = (V_in*(unsigned int)R2)/(THERM_V_IN-V_in);  //THERMISTOR in R2 position
+  long R1 = (V_in*(unsigned int)S_R2)/(THERM_V_IN-V_in);  //THERMISTOR in R2 position
   //  long R1 = ((THERM_V_IN * (unsigned int) R2) - (V_in * (unsigned int) R2)) / THERM_V_IN; 
   // if THERMISTOR in R1 position use ^ CHANGE VARIABLE FOR R1= around to R2= and change FC_Constants
-  int temp = 1 / (A_TEMP + (B_TEMP * log(R1)) + C_TEMP * log(R1) * log(R1) * log(R1)) - 273.15;
+  int temp = 1 / (A_S_TEMP + (B_S_TEMP * log(R1)) + C_S_TEMP * log(R1) * log(R1) * log(R1)) - 273.15;
+
+  return temp;
+}
+int ambTemperatureComputation(double averageValue) { 
+
+  float V_in = averageValue * 5 / 1023; // measured signal voltage
+  long R1 = (V_in*(unsigned int)A_R2)/(THERM_V_IN-V_in);  //THERMISTOR in R2 position
+  //  long R1 = ((THERM_V_IN * (unsigned int) R2) - (V_in * (unsigned int) R2)) / THERM_V_IN; 
+  // if THERMISTOR in R1 position use ^ CHANGE VARIABLE FOR R1= around to R2= and change FC_Constants
+  int temp = 1 / (A_A_TEMP + (B_A_TEMP * log(R1)) + C_A_TEMP * log(R1) * log(R1) * log(R1)) - 273.15;
 
   return temp;
 }

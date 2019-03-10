@@ -1,6 +1,6 @@
 // Index Counter
 int arrayIndex = 0; // modulo-100  -- counter for averaging sensor value arrays
-
+int hydrogen_delay = 2000;
 // Flags
 boolean arrays_filled = false;
 
@@ -58,31 +58,33 @@ void Check_Alarms() {
   }
 
   // Uses the average sensor value to determine the actual values for ambient temp, stack temp, etc.
-  amb_temp     = TemperatureComputation(amb_temp_total / ARRAY_SIZE);
-  stack_temp   = TemperatureComputation(stack_temp_total / ARRAY_SIZE);
+  amb_temp     = ambTemperatureComputation(amb_temp_total / ARRAY_SIZE);
+  stack_temp   = stackTemperatureComputation(stack_temp_total / ARRAY_SIZE);
   fc_voltage   = voltageComputation(fc_voltage_total / ARRAY_SIZE);
   fc_current   = currentComputation(fc_current_total / ARRAY_SIZE);
   amb_hydrogen = hydrogenComputation(amb_hydrogen_total / ARRAY_SIZE);
 
   //Always checking for hydrogen leaking, regardless of state
-  //  if (amb_hydrogen > HYDROGEN_MAX)
-  //    fc_alarm = true;
-  if (fc_current < FC_MIN_CURRENT || fc_current > FC_MAX_CURRENT)
-    fc_alarm = true;
-  //
+  if (Current_Time > hydrogen_delay) {
+    //    if (amb_hydrogen < HYDROGEN_IN)
+    //      fc_alarm = true;
+  }
+//  if (fc_current < FC_MIN_CURRENT || fc_current > FC_MAX_CURRENT)
+//    fc_alarm = true;
+
   if (FC_State == FC_RUN) {
 //    if (fc_voltage < FC_RUN_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
 //      fc_alarm = true;
-    if (amb_temp < FC_RUN_MIN_TEMP || amb_temp > FC_MAX_TEMP)
-      fc_alarm = true;
-
+//    if (amb_temp < FC_RUN_MIN_TEMP || amb_temp > FC_MAX_TEMP)
+//      fc_alarm = true;
+//
     if (stack_temp < FC_RUN_MIN_TEMP || stack_temp > FC_MAX_TEMP)
       fc_alarm = true;
   }
   else {
-    if (amb_temp < FC_MIN_TEMP || amb_temp > FC_MAX_TEMP)
-      fc_alarm = true;
-    //
+//    if (amb_temp < FC_MIN_TEMP || amb_temp > FC_MAX_TEMP)
+//      fc_alarm = true;
+//
     if (stack_temp < FC_MIN_TEMP || stack_temp > FC_MAX_TEMP)
       fc_alarm = true;
   }
