@@ -1,8 +1,13 @@
 #include "FC_Constants.h"
+#include <EEPROM.h>
+
+int alarm_val;
+int alarm_sens;
 
 // System-Wide Flags
 boolean fc_on = false;
 boolean fc_alarm = false;
+boolean eeprom_stw = false;
 
 // System-Wide Counters
 unsigned long Current_Time = 1; // would overflow after 25 days if left running forever (hopefully)
@@ -44,4 +49,9 @@ void loop() {
   Last_Time = Current_Time;
   Current_Time = millis();
   LOOP_TIME = Current_Time - Last_Time;
+  if(!eeprom_stw && fc_alarm && Current_Time > 4000){
+    eeprom_stw = true;
+    EEPROM.write(0,alarm_sens);
+    EEPROM.write(1,alarm_val);
+    }
 }

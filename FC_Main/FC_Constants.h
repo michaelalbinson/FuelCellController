@@ -1,4 +1,4 @@
-// FC States
+ //FC States
 #define FC_INITIAL 0
 #define FC_STANDBY 1
 #define FC_STARTUP 2
@@ -46,13 +46,15 @@
 #define FC_MIN_CURRENT          0   // A
 #define FC_MAX_CURRENT          75  // A
 
-#define FC_RUN_MIN_VOLTAGE      6.9  // V
-#define FC_MAX_VOLTAGE          28  // V
+#define FC_RUN_MIN_VOLTAGE      1.9  //This equates to 12 V
+#define FC_MAX_VOLTAGE          3  // This equates to 28-30 V
 #define FC_MAX_H2_READ          10  // ppm
 #define FC_RUN_MIN_TEMP         0   // deg C 
 #define FC_MIN_TEMP             15  // deg C 
 #define FC_MAX_TEMP             75  // deg C
-#define HYDROGEN_IN            2 // V
+#define HYDROGEN_MIN            1.5 // V
+
+
 
 // Constant System Parameters
 #define PURGE_INTERVAL   2300.0 // A*s
@@ -76,9 +78,9 @@
 //Hydrogen Const
 #define H_CONST 1
 // Data sheet shows a linear relation. Set to one for now
-#define THERM_V_IN 5.1
+#define THERM_V_IN 6 
 #define A_R2   10000 //Originally 60
-#define S_R2   22000   
+#define S_R2   47000   
 //Amb Thermistor Curve Coefficients For Steinhart-Hart.
 #define A_A_TEMP 0.000757     // 0.0052
 #define B_A_TEMP 0.000274     // -1.0979

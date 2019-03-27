@@ -4,6 +4,7 @@ int hydrogen_delay = 2000;
 // Flags
 boolean arrays_filled = false;
 
+
 // Averaged values
 double amb_temp;
 double stack_temp;
@@ -65,27 +66,45 @@ void Check_Alarms() {
   amb_hydrogen = hydrogenComputation(amb_hydrogen_total / ARRAY_SIZE);
 
   //Always checking for hydrogen leaking, regardless of state
-  if (Current_Time > hydrogen_delay) {
-    //    if (amb_hydrogen < HYDROGEN_IN)
-    //      fc_alarm = true;
+  //  if (Current_Time > hydrogen_delay) {
+  //    if (amb_hydrogen < HYDROGEN_MIN ){
+  //      fc_alarm = true;
+  //      alarm_sens = amb_hydrogen;
+  //      alarm_val= 0;
+  //  }
+  //}
+  if (fc_current < FC_MIN_CURRENT || fc_current > FC_MAX_CURRENT) {
+    fc_alarm = true;
+    alarm_sens = fc_current;
+    alarm_val = 1;
   }
-//  if (fc_current < FC_MIN_CURRENT || fc_current > FC_MAX_CURRENT)
-//    fc_alarm = true;
-
   if (FC_State == FC_RUN) {
-//    if (fc_voltage < FC_RUN_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE)
-//      fc_alarm = true;
-//    if (amb_temp < FC_RUN_MIN_TEMP || amb_temp > FC_MAX_TEMP)
-//      fc_alarm = true;
-//
-    if (stack_temp < FC_RUN_MIN_TEMP || stack_temp > FC_MAX_TEMP)
+    //    if (fc_voltage < FC_RUN_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE) {
+    //      fc_alarm = true;
+    //      alarm_sens = fc_voltage;
+    //      alarm_val = 2;
+    //    }
+    if (amb_temp < FC_RUN_MIN_TEMP || amb_temp > FC_MAX_TEMP) {
       fc_alarm = true;
+      alarm_sens = amb_temp;
+      alarm_val = 3;
+    }
+    if (stack_temp < FC_RUN_MIN_TEMP || stack_temp > FC_MAX_TEMP) {
+      fc_alarm = true;
+      alarm_sens = stack_temp;
+      alarm_val = 4;
+    }
   }
   else {
-//    if (amb_temp < FC_MIN_TEMP || amb_temp > FC_MAX_TEMP)
-//      fc_alarm = true;
-//
-    if (stack_temp < FC_MIN_TEMP || stack_temp > FC_MAX_TEMP)
+    if (amb_temp < FC_MIN_TEMP || amb_temp > FC_MAX_TEMP) {
       fc_alarm = true;
+      alarm_sens = amb_temp;
+      alarm_val = 5;
+    }
+    if (stack_temp < FC_MIN_TEMP || stack_temp > FC_MAX_TEMP) {
+      fc_alarm = true;
+      alarm_sens = stack_temp;
+      alarm_val = 6;
+    }
   }
 }

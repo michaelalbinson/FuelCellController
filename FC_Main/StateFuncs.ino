@@ -137,7 +137,9 @@ void FCAlarm() {
   // All actuators are in their safe states
   setAllSafe();
   setColorState(LED_ON, 0, 0); // Sets state LED to red.
+
 }
+
 
 // ----------------- STATE TRANSITION & SUBSTATE TRANSITION -----------------
 void stateTransition(int fromState, int toState) {
