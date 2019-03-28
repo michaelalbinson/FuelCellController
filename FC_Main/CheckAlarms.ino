@@ -3,7 +3,7 @@ int arrayIndex = 0; // modulo-100  -- counter for averaging sensor value arrays
 int hydrogen_delay = 2000;
 // Flags
 boolean arrays_filled = false;
-
+boolean arrays_emptied = false;
 
 // Averaged values
 double amb_temp;
@@ -26,7 +26,16 @@ void Check_Alarms() {
   // Check all alarm properties to make sure they're within the safe range
   // If not, set fc_alarm to true.
   // Current, Voltage, Hydrogen and Temperature (Stack and Ambient) are checked
-
+  if (!arrays_emptied) {
+    for (int i = 0; i < ARRAY_SIZE; i++) {
+      ambientTempArray[i] = 0;
+      stackTempArray[i] = 0;
+      stackVoltageArray[i] = 0;
+      stackCurrentArray[i] = 0;
+      hydrogenArray[i] = 0;
+    }
+    arrays_emptied = true;
+  }
   // Take measurements
   ambientTempArray[arrayIndex]  = analogRead(AMB_THEMRMISTOR_PIN);
   stackTempArray[arrayIndex]    = analogRead(STACK_THEMRMISTOR_PIN);
