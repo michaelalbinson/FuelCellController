@@ -63,30 +63,37 @@ void Check_Alarms() {
     amb_temp_total     += ambientTempArray[i];
     stack_temp_total   += stackTempArray[i];
     fc_voltage_total   += stackVoltageArray[i];
-    fc_current_total   += stackCurrentArray[i];
+//    fc_current_total   += stackCurrentArray[i];
     amb_hydrogen_total += hydrogenArray[i];
   }
 
+  // read the instantaneous stack current instead of the average
+  fc_current_total = stackCurrentArray[arrayIndex];
+  fc_current   = currentComputation(fc_current_total);
+  
   // Uses the average sensor value to determine the actual values for ambient temp, stack temp, etc.
   amb_temp     = ambTemperatureComputation(amb_temp_total / ARRAY_SIZE);
   stack_temp   = stackTemperatureComputation(stack_temp_total / ARRAY_SIZE);
   fc_voltage   = voltageComputation(fc_voltage_total / ARRAY_SIZE);
-  fc_current   = currentComputation(fc_current_total / ARRAY_SIZE);
+//  fc_current   = currentComputation(fc_current_total / ARRAY_SIZE);
   amb_hydrogen = hydrogenComputation(amb_hydrogen_total / ARRAY_SIZE);
 
   //Always checking for hydrogen leaking, regardless of state
-  //  if (Current_Time > hydrogen_delay) {
-  //    if (amb_hydrogen < HYDROGEN_MIN ){
-  //      fc_alarm = true;
-  //      alarm_sens = amb_hydrogen;
-  //      alarm_val= 0;
-  //  }
-  //}
+    if (Current_Time > hydrogen_delay) {
+      if (amb_hydrogen < HYDROGEN_MIN ){
+        fc_alarm = true;
+        alarm_sens = amb_hydrogen;
+        alarm_val= 0;
+    }
+  }
+
+  // Always watch stack current regardless of state
   if (fc_current < FC_MIN_CURRENT || fc_current > FC_MAX_CURRENT) {
     fc_alarm = true;
     alarm_sens = fc_current;
     alarm_val = 1;
   }
+  
   if (FC_State == FC_RUN) {
     //    if (fc_voltage < FC_RUN_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE) {
     //      fc_alarm = true;

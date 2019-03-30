@@ -49,6 +49,8 @@ void loop() {
   Last_Time = Current_Time;
   Current_Time = millis();
   LOOP_TIME = Current_Time - Last_Time;
+
+  // if we enter alarm, save the sensor that sent us into alarm in memory
   if(!eeprom_stw && fc_alarm && Current_Time > 4000){
     eeprom_stw = true;
     EEPROM.write(0,alarm_sens);
