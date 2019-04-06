@@ -88,12 +88,12 @@ void Check_Alarms() {
   }
 
   // Always watch stack current regardless of state
-  if (fc_current < FC_MIN_CURRENT || fc_current > FC_MAX_CURRENT) {
-    fc_alarm = true;
-    alarm_sens = fc_current;
-    alarm_val = 1;
-  }
-  
+//  if (fc_current < FC_MIN_CURRENT || fc_current > FC_MAX_CURRENT) {
+//    fc_alarm = true;
+//    alarm_sens = fc_current;
+//    alarm_val = 1;
+//  }
+//  
   if (FC_State == FC_RUN) {
     //    if (fc_voltage < FC_RUN_MIN_VOLTAGE || fc_voltage > FC_MAX_VOLTAGE) {
     //      fc_alarm = true;

@@ -50,14 +50,14 @@
 #define FC_MAX_VOLTAGE          3  // This equates to 28-30 V
 #define FC_MAX_H2_READ          10  // ppm
 #define FC_RUN_MIN_TEMP         0   // deg C 
-#define FC_MIN_TEMP             15  // deg C 
+#define FC_MIN_TEMP             8  // deg C 
 #define FC_MAX_TEMP             75  // deg C
 #define HYDROGEN_MIN            1.5 // V
 
 
 
 // Constant System Parameters
-#define PURGE_INTERVAL   2300.0 // A*s
+#define PURGE_INTERVAL   1500.0 // A*s
 #define PURGE_DURATION  300 // TODO: 300ms 
 
 // Fan Speeds  

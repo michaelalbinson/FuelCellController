@@ -20,11 +20,11 @@ int ambTemperatureComputation(double averageValue) {
   return temp;
 }
 
-int voltageComputation(double averageValue) {
+double voltageComputation(double averageValue) {
   double V_v_in = averageValue * 5 / 1023;
   double voltage = V_v_in; //Accuracy breaks down at 1.4V. Divide 1.7V because reasons...
   
-  return (int) voltage;
+  return voltage;
 }
 
 int currentComputation(double averageValue) {
