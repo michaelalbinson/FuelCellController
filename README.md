@@ -34,20 +34,4 @@ Arduino code for Queen's Fuel Cell Team
 
 
 ### Things I need answered/want:
-*Fan? Yes or no
-
-*Optimal upper and lower bounds for temperature of the stack
-
-*Calibration curves for the stack thermistors
-
-*A goddamn shunt resistor (A was to reliably measure voltage and current)
-
-*Testing system using a battery and the motor instead of fuel cell
-
-*Way of physically seeing what the system is doing could be nice (i.e. lcd/LED output)
-
 *A secondary system showing system performance to the driver
-
-*how the fuck does this motor work and how do we see its resistance increase as the driver opens the throttle
-
-
